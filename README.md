@@ -7,6 +7,11 @@ HTC Flip clock with weather for [Home Assistant](https://github.com/home-assista
 ![image](https://user-images.githubusercontent.com/12171894/78754666-89a09a00-7980-11ea-90bb-3b5783f6258e.png)
 ![image](https://user-images.githubusercontent.com/12171894/78754777-c076b000-7980-11ea-99d9-01f44968d7b5.png)
 
+# Support
+Hey dude! If you like it .. well :beers: or a :coffee: would be nice :D
+
+[![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/fhc0C7A)
+
 ## Notes
 This version requires jQuery (already in the package). I'll probably do a version with no jQuery without the flip clock animation. 
 
