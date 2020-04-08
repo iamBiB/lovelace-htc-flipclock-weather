@@ -1,4 +1,4 @@
-# HomeAssistant HTC Weather card
+# HomeAssistant HTC Flipclock with Weather card
 [![](https://img.shields.io/github/release/ibBogdan/htc-hassio-weather-card.svg?style=flat-square)](https://github.com/ibBogdan/htc-hassio-weather-card/releases/latest)
 
 HTC Flip clock with weather for [Home Assistant](https://github.com/home-assistant/home-assistant)
@@ -18,11 +18,11 @@ This version requires jQuery (already in the package). I'll probably do a versio
 
 2. Download `htc-weather` repo and add the `htc-weather` to step 1 folder. 
 
-3. Add a reference to `htc-weather.js` inside your `ui-lovelace.yaml` or through the raw config editor gui.
+3. Add a reference to `htc-flipclock-weather.js` inside your `ui-lovelace.yaml` or through the raw config editor gui.
 
     ```yaml
     resources:
-      - url: /local/custom_ui/htc-weather/htc-weather.js?v1.0.1
+      - url: /local/custom_ui/htc-weather/htc-flipclock-weather.js?v1.0.2
         type: module
     ```
 
@@ -56,7 +56,7 @@ This version requires jQuery (already in the package). I'll probably do a versio
 #### Standard card
 ```yaml
 - type: 'custom:htc-weather-card'
-  entity: weather.dark_sky
+  entity: weather.home
   sun: sun.sun
 ```
 
