@@ -16,7 +16,7 @@ This version requires jQuery (already in the package). I'll probably do a versio
 
 1. Move into your `config/www/custom_ui` directory
 
-2. Download `htc-weather` repo and add the `htc-weather` to step 1 folder. 
+2. Download `lovelace-htc-flipclock-weather` repo and add the `htc-weather` to step 1 folder. 
 
 3. Add a reference to `htc-flipclock-weather.js` inside your `ui-lovelace.yaml` or through the raw config editor gui.
 
