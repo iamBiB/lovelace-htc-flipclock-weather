@@ -3,9 +3,13 @@
 
 HTC Flip clock with weather for [Home Assistant](https://github.com/home-assistant/home-assistant)
 
-
+### White theme
 ![image](https://user-images.githubusercontent.com/12171894/78754666-89a09a00-7980-11ea-90bb-3b5783f6258e.png)
+### Dark theme
 ![image](https://user-images.githubusercontent.com/12171894/78754777-c076b000-7980-11ea-99d9-01f44968d7b5.png)
+### With custom entity
+![image](https://user-images.githubusercontent.com/12171894/78868363-7ad2e980-7a4b-11ea-8d70-e10dd342c715.png)
+
 
 # Support
 Hey dude! If you like it .. well :beers: or a :coffee: would be nice :D
