@@ -54,6 +54,7 @@ This version requires jQuery (already in the package). I'll probably do a versio
 | renderForecast | bool | optional | Render forecast (only 4 days).
 | renderClock | bool | optional | Render clock.
 | renderDetails | bool | optional | Render sunt details and wind.
+| high_low_entity | bool | optional | Replace high / low temperature with a custom entity. Params available entity_id, name. Default high / low temperature today
 
 
 ### Example usage
