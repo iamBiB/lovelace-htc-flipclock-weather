@@ -3,6 +3,7 @@ const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 var old_time = {}
 var intervalSetNewTime = ''
+import { regional } from './regional.js ';
 
 const weatherDefaults = {
 	widgetPath: '/local/custom_ui/htc-weather/',
@@ -11,71 +12,62 @@ const weatherDefaults = {
     svrOffset: 0,
     renderForecast: true,
     renderClock: true,
-    renderDetails: true
+    renderDetails: true,
+    high_low_entity: false,
 };
 weatherDefaults['imagesPath'] = weatherDefaults.widgetPath+'images/'
 weatherDefaults['clockImagesPath'] = weatherDefaults.imagesPath+'clock/'
 weatherDefaults['weatherImagesPath'] = weatherDefaults.imagesPath+'weather/'
-var regional = [];
-regional['ro'] = {
-    monthNames: ['Ian', 'Feb', 'Mar', 'Apr', 'Mai', 'Iun', 'Iul', 'Aug', 'Sept', 'Oct', 'Noi', 'Dec'],
-    dayNames: ['Dum', 'Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sam'],
-    lang: 'ro'
-}
-regional['en'] = {
-    monthNames: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    dayNames: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-    lang: 'en'
-}
+
 
 
 const weatherIconsDay = {
-  clear: "sunny",
-  "clear-night": "night",
-  cloudy: "cloudy",
-  fog: "fog",
-  hail: "hail",
-  lightning: "thunder",
-  "lightning-rainy": "thunder",
-  partlycloudy: "partlycloudy",
-  pouring: "pouring",
-  rainy: "pouring",
-  snowy: "snowy",
-  "snowy-rainy": "snowy-rainy",
-  sunny: "sunny",
-  windy: "cloudy",
-  "windy-variant": "cloudy-day-3",
-  exceptional: "na"
+    clear: "sunny",
+    "clear-night": "night",
+    cloudy: "cloudy",
+    fog: "fog",
+    hail: "hail",
+    lightning: "thunder",
+    "lightning-rainy": "thunder",
+    partlycloudy: "partlycloudy",
+    pouring: "pouring",
+    rainy: "pouring",
+    snowy: "snowy",
+    "snowy-rainy": "snowy-rainy",
+    sunny: "sunny",
+    windy: "cloudy",
+    "windy-variant": "cloudy-day-3",
+    exceptional: "na"
 };
 
 const weatherIconsNight = {
-  ...weatherIconsDay,
-  fog: "fog",
-  clear: "night",
-  sunny: "night",
-  partlycloudy: "cloudy-night-3",
-  "windy-variant": "cloudy-night-3"
+    ...weatherIconsDay,
+    fog: "fog",
+    clear: "night",
+    sunny: "night",
+    partlycloudy: "cloudy-night-3",
+    "windy-variant": "cloudy-night-3"
 };
 
 
 const windDirections = [
-  "N",
-  "NNE",
-  "NE",
-  "ENE",
-  "E",
-  "ESE",
-  "SE",
-  "SSE",
-  "S",
-  "SSW",
-  "SW",
-  "WSW",
-  "W",
-  "WNW",
-  "NW",
-  "NNW",
-  "N"
+    "N",
+    "NNE",
+    "NE",
+    "ENE",
+    "E",
+    "ESE",
+    "SE",
+    "SSE",
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW",
+    "NNW",
+    "N"
 ];
 
 const fireEvent = (node, type, detail, options) => {
@@ -166,12 +158,17 @@ class HtcWeather extends LitElement {
         }
         HtcWeather.setConfig = this._config
         HtcWeather.setHass = this.hass
-        
-
-        this.numberElements = 0;
-
         const stateObj = this.hass.states[this._config.entity];
-        if (!stateObj) {
+        var entity = this._config.entity;
+        var entity_name = this._config.entity;
+        if(this._config.high_low_entity){
+            if(!this.hass.states[this._config.high_low_entity.entity_id]){
+                entity = this.hass.states[this._config.high_low_entity.entity_id]
+                entity_name = this._config.high_low_entity.entity_id;
+            }
+        }
+
+        if (!entity) {
           return html`
             <style>
               .not-found {
@@ -182,7 +179,7 @@ class HtcWeather extends LitElement {
             </style>
             <ha-card>
               <div class="not-found">
-                Entity not available/installed: ${this._config.entity}
+                Entity not available/installed: ${entity_name}
               </div>
             </ha-card>
           `;
@@ -191,7 +188,7 @@ class HtcWeather extends LitElement {
     }
   	renderCard() {
 	  	this.numberElements++;
-	  	old_time = HtcWeather.getOldTime(this._config)
+	  	old_time = HtcWeather.getOldTime()
 	  	const stateObj = this.hass.states[this._config.entity];
 	    const root = this.shadowRoot;
 	    if (root.lastChild) root.removeChild(root.lastChild);
@@ -322,13 +319,14 @@ class HtcWeather extends LitElement {
     	$(elem).css('background','url('
                  + weatherIcon 
                  + ') 50% 0 no-repeat');
-     	var weather = `<div id="local"><p class="city">${stateObj.attributes.friendly_name}</p><p class="high_low">
-                            ${stateObj.attributes.forecast[0].temperature}&deg;`
-      	if(stateObj.attributes.forecast[0].templow){
-      		weather += `&nbsp;/&nbsp;${stateObj.attributes.forecast[0].templow}&deg;`;
-      	}
+     	var weather = `<div id="local">
+                            <p class="city">${stateObj.attributes.friendly_name}</p>
+                            ${curr_temp}
+                        </div>`;
+        weather += HtcWeather.getHighLow();
+        
       	weather += '</p></div>';
-     	weather += '<div id="temp"><p id="date">&nbsp</p>'  + curr_temp + '</div>';
+     	// weather += '<div id="temp"><p id="date">&nbsp</p>'  + curr_temp + '</div>';
 
      	$(elem).html(weather);
      	if(config.renderForecast){
@@ -342,9 +340,9 @@ class HtcWeather extends LitElement {
 				var forecast = `<li>`;
 				forecast    += `<p class="dayname">${regional[config.lang]['dayNames'][d_date.getDay()]}&nbsp;${d_date.getDate()}</p>
 				                <img src="${forecastIcon}" alt="${stateObj.attributes.forecast[i].condition}" title="${stateObj.attributes.forecast[i].condition}" />
-				                <div class="daytemp">${stateObj.attributes.forecast[i].temperature}${this.getUnit("temperature")}`
+				                <div class="daytemp">${Math.round(stateObj.attributes.forecast[i].temperature * 100) / 100}${this.getUnit("temperature")}`
 				if(stateObj.attributes.forecast[0].templow){
-		      		forecast += `&nbsp;/&nbsp;${stateObj.attributes.forecast[0].templow}${this.getUnit("temperature")}`;
+		      		forecast += `&nbsp;/&nbsp;${Math.round(stateObj.attributes.forecast[0].templow * 100) / 100}${this.getUnit("temperature")}`;
 		      	}
 		      	forecast += `</div></li>`;
 				$(elem).find('#forecast').append(forecast);
@@ -354,9 +352,34 @@ class HtcWeather extends LitElement {
 	    	HtcWeather.renderDetails(elem, config,stateObj,hass_states)	
 	    }
 	}
-    static getOldTime(config) {
+
+    static getHighLow(){
+        var config = HtcWeather.getConfig
+        var returnEntityHtml = '';
+        var high_low_state = '';
+        var today_date = `${regional[config.lang]['dayNames'][new Date().getDay()]}&nbsp;${new Date().getDate()}`;
+        var is_forecast = true;
+        if(config.high_low_entity){
+            var stateObj = HtcWeather.getHass.states[config.high_low_entity.entity_id]
+            high_low_state = stateObj.state
+            var high_low_date = (config.high_low_entity.name)?config.high_low_entity.name:today_date;
+            is_forecast = false
+        }else{
+            var stateObj = HtcWeather.getHass.states[config.entity]
+            high_low_state = Math.round(stateObj.attributes.forecast[0].temperature * 100) / 100+'&deg'
+            var high_low_date = today_date;
+        }
+        returnEntityHtml += `<div id="temp"><p id="date">&nbsp${high_low_date}</p><p class="high_low">
+                        ${high_low_state}`
+        if(is_forecast && stateObj.attributes.forecast[0].templow){
+            returnEntityHtml += `&nbsp;/&nbsp;${Math.round(stateObj.attributes.forecast[0].templow * 100) / 100}&deg;`;
+        }
+        return returnEntityHtml;
+    }
+    static getOldTime() {
+        var config = HtcWeather.getConfig
         var localtime = new Date(HtcWeather.getHass.states["sensor.date_time_iso"].state);
-        var now = new Date(localtime.getTime() - config.svrOffset);
+        var now = new Date(localtime.getTime() - (config.svrOffset*1000));
         var old = new Date();
         old.setTime(now.getTime() - 60000);
         
@@ -388,8 +411,8 @@ class HtcWeather extends LitElement {
     }
     static setNewTime(elem){
         var config = HtcWeather.getConfig
-    	var localtime = new Date(HtcWeather.getHass.states["sensor.date_time_iso"].state);
-        var now = new Date(localtime.getTime() - config.svrOffset);
+        var localtime = new Date(HtcWeather.getHass.states["sensor.date_time_iso"].state);
+        var now = new Date(localtime.getTime() - (config.svrOffset*1000));
         var old = new Date();
         old.setTime(now.getTime() - 60000);
         
@@ -694,7 +717,7 @@ class HtcWeather extends LitElement {
 
     		#htc-weather #temp {
     		    float:right;
-    		    margin:60px 15px 0 0;
+    		    margin:70px 15px 0 0;
     		    text-align:right;
     		    color:#fff
     		}
