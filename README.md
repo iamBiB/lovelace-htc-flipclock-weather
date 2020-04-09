@@ -69,6 +69,15 @@ This version requires jQuery (already in the package). I'll probably do a versio
   entity: weather.home
   sun: sun.sun
 ```
+#### With custom high_low_entity entity
+```yaml
+- type: 'custom:htc-weather-card'
+  entity: weather.dark_sky
+  sun: sun.sun
+  high_low_entity:
+    entity_id: sensor.time_utc
+    name: UTC Time
+```
 
 ## Problems?
 There might be :D .. So give me a shout for issues or even updates :D
