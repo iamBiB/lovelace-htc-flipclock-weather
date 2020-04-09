@@ -54,7 +54,7 @@ This version requires jQuery (already in the package). I'll probably do a versio
 | name | string | optional | Set a custom name.
 | lang | string | optional | Set a language (ro/en available).
 | am_pm | string | optional | Set clock in AM/PM format.
-| svrOffset | int | optional | If you need offset on time.
+| svrOffset | int | optional | If you need offset on time (seconds).
 | renderForecast | bool | optional | Render forecast (only 4 days).
 | renderClock | bool | optional | Render clock.
 | renderDetails | bool | optional | Render sunt details and wind.
