@@ -3,9 +3,13 @@
 
 HTC Flip clock with weather for [Home Assistant](https://github.com/home-assistant/home-assistant)
 
-
+### White theme
 ![image](https://user-images.githubusercontent.com/12171894/78754666-89a09a00-7980-11ea-90bb-3b5783f6258e.png)
+### Dark theme
 ![image](https://user-images.githubusercontent.com/12171894/78754777-c076b000-7980-11ea-99d9-01f44968d7b5.png)
+### With custom entity
+![image](https://user-images.githubusercontent.com/12171894/78868363-7ad2e980-7a4b-11ea-8d70-e10dd342c715.png)
+
 
 # Support
 Hey dude! If you like it .. well :beers: or a :coffee: would be nice :D
@@ -50,10 +54,11 @@ This version requires jQuery (already in the package). I'll probably do a versio
 | name | string | optional | Set a custom name.
 | lang | string | optional | Set a language (ro/en available).
 | am_pm | string | optional | Set clock in AM/PM format.
-| svrOffset | int | optional | If you need offset on time.
+| svrOffset | int | optional | If you need offset on time (seconds).
 | renderForecast | bool | optional | Render forecast (only 4 days).
 | renderClock | bool | optional | Render clock.
 | renderDetails | bool | optional | Render sunt details and wind.
+| high_low_entity | bool | optional | Replace high / low temperature with a custom entity. Params available entity_id, name. Default high / low temperature today
 
 
 ### Example usage
@@ -63,6 +68,15 @@ This version requires jQuery (already in the package). I'll probably do a versio
 - type: 'custom:htc-weather-card'
   entity: weather.home
   sun: sun.sun
+```
+#### With custom high_low_entity entity
+```yaml
+- type: 'custom:htc-weather-card'
+  entity: weather.dark_sky
+  sun: sun.sun
+  high_low_entity:
+    entity_id: sensor.time_utc
+    name: UTC Time
 ```
 
 ## Problems?
