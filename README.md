@@ -21,6 +21,21 @@ This version requires jQuery (already in the package). I'll probably do a versio
 
 ## Install
 
+### REQUIREMENTS
+The time is based on time_date sensors. In order for the plugin to work you need to create the following sensors in your HA
+```
+platform: time_date
+display_options:
+    - time
+    - date
+    - date_time
+    - date_time_utc
+    - date_time_iso
+    - time_date
+    - time_utc
+    - beat
+```
+
 ### CLI install
 
 1. Move into your `config/www/custom_ui` directory
