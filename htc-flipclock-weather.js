@@ -3,7 +3,7 @@ const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 var old_time = {}
 var intervalSetNewTime = ''
-import { regional } from './regional.js ';
+import { regional } from './regional.js?v1.1.4';
 
 const weatherDefaults = {
 	widgetPath: '/local/custom_ui/htc-weather/',
@@ -18,7 +18,7 @@ const weatherDefaults = {
 weatherDefaults['imagesPath'] = weatherDefaults.widgetPath+'images/'
 weatherDefaults['clockImagesPath'] = weatherDefaults.imagesPath+'clock/'
 weatherDefaults['weatherImagesPath'] = weatherDefaults.imagesPath+'weather/'
-
+const htcVersion = "1.1.4";
 
 
 const weatherIconsDay = {
@@ -98,7 +98,7 @@ function hasConfigOrEntityChanged(element, changedProps) {
     }
     return true;
 }
-
+console.info("%c HTC Flip Clock %c ".concat(htcVersion, " "), "color: white; background: #555555; ", "color: white; background: #3a7ec6; ");
 class HtcWeather extends LitElement {
   	
     static get getConfig(){
@@ -184,6 +184,7 @@ class HtcWeather extends LitElement {
             </ha-card>
           `;
         }
+        
         return this.renderCard()
     }
   	renderCard() {
@@ -709,7 +710,7 @@ class HtcWeather extends LitElement {
     		}
 
     		.city {
-    		    font-size:12pt;
+    		    font-size:14pt;
     		}
     		.high_low {
     		    font-size:18pt;
@@ -723,12 +724,12 @@ class HtcWeather extends LitElement {
     		}
 
     		#htc-weather #date {
-    		    font-size:16pt;
+    		    font-size:14pt;
     		    padding-right:2px;
     		}
 
     		.temp {
-    		    font-size:30pt;
+    		    font-size:18pt;
     		    padding:0;
     		}
 
