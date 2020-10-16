@@ -3,12 +3,12 @@ export const themes = {
 		css: `#htc-weather-card-container {
     		    width:440px;
     		    height:448px;
-    		    background-size:50% 40px!important;
-    		    background-repeat:no-repeat;
+    		    background-repeat:no-repeat!important;
     		    position:relative;
     		    overflow:hidden;
     		    font-family:Arial, Verdana, Tahoma, Helvetica, sans-serif;
     		    margin: auto;
+                background: url("../local/custom_ui/htc-weather/themes/default/background.png") 50% 40px no-repeat;
     		}
 
     		#htc-weather-card-container p {

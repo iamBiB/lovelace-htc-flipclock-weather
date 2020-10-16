@@ -24,7 +24,7 @@ weatherDefaults['imagesPath'] = weatherDefaults.widgetPath + 'themes/' + weather
 weatherDefaults['clockImagesPath'] = weatherDefaults.imagesPath + 'clock/'
 weatherDefaults['weatherImagesPath'] = weatherDefaults.imagesPath + 'weather/' + weatherDefaults.theme['weather_icon_set'] + '/'
 
-const htcVersion = "1.2.0";
+const htcVersion = "1.2.1";
 
 
 const weatherIconsDay = {
@@ -229,7 +229,7 @@ class HtcWeather extends LitElement {
         const container = document.createElement('div');
         container.id = 'htc-weather-card-container';
         // container.onclick = this._handleClick(this._config.entity)
-        container.style = `height: ${container_size};background:url(${this._config.imagesPath}background.png);`
+        container.style = `height: ${container_size};`
         card.appendChild(container);
 
         const htc_clock = document.createElement('div')
