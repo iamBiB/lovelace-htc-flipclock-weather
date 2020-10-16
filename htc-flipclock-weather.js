@@ -4,21 +4,27 @@ const css = LitElement.prototype.css;
 var old_time = {}
 var intervalSetNewTime = ''
 import { regional } from './regional.js?v1.1.4';
+import { themes } from './themes.js?v1.0.1';
 
 const weatherDefaults = {
-	widgetPath: '/local/custom_ui/htc-weather/',
+    widgetPath: '/local/custom_ui/htc-weather/',
     lang: 'en',
     am_pm: false,
     svrOffset: 0,
-    renderForecast: true,
+    render: true,
     renderClock: true,
     renderDetails: true,
     high_low_entity: false,
+    theme: {
+        name: 'default',
+        weather_icon_set: 'default'
+    }
 };
-weatherDefaults['imagesPath'] = weatherDefaults.widgetPath+'images/'
-weatherDefaults['clockImagesPath'] = weatherDefaults.imagesPath+'clock/'
-weatherDefaults['weatherImagesPath'] = weatherDefaults.imagesPath+'weather/'
-const htcVersion = "1.1.4";
+weatherDefaults['imagesPath'] = weatherDefaults.widgetPath + 'themes/' + weatherDefaults.theme['name'] + '/'
+weatherDefaults['clockImagesPath'] = weatherDefaults.imagesPath + 'clock/'
+weatherDefaults['weatherImagesPath'] = weatherDefaults.imagesPath + 'weather/' + weatherDefaults.theme['weather_icon_set'] + '/'
+
+const htcVersion = "1.2.0";
 
 
 const weatherIconsDay = {
@@ -100,7 +106,6 @@ function hasConfigOrEntityChanged(element, changedProps) {
 }
 console.info("%c HTC Flip Clock %c ".concat(htcVersion, " "), "color: white; background: #555555; ", "color: white; background: #3a7ec6; ");
 class HtcWeather extends LitElement {
-  	
     static get getConfig(){
         return this._config;
     }
@@ -120,34 +125,39 @@ class HtcWeather extends LitElement {
         };
     }
 
-  	async importJquery() {
-    	await import("./lib/jquery-3.4.1.min.js")
-    	return {config:this._config, entity: this.hass.states[this._config.entity], hass_states:this.hass.states}
-  	}
+    async importJquery() {
+        await import("./lib/jquery-3.4.1.min.js")
+        return {config:this._config, entity: this.hass.states[this._config.entity], hass_states:this.hass.states}
+    }
 
-  	static getStubConfig() {
-    	return {};
-  	}
+    static getStubConfig() {
+        return {};
+    }
 
     setConfig(config) {
         if (!config.entity) {
-          	throw new Error("Please define a weather entity");
+            throw new Error("Please define a weather entity");
         }
         var defaultConfig = {}
         for (const property in config) {
-        	defaultConfig[property] = config[property]
+            defaultConfig[property] = config[property]
         }
         for (const property in weatherDefaults) {
-    	  	if(config[property] === undefined){
-    	  		defaultConfig[property] = weatherDefaults[property]
-    	  	}
-    	}
-    	this._config = defaultConfig;
+            if(config[property] === undefined){
+                defaultConfig[property] = weatherDefaults[property]
+            }
+        }
+        defaultConfig['imagesPath'] = defaultConfig.widgetPath + 'themes/' + defaultConfig.theme['name'] + '/'
+        defaultConfig['clockImagesPath'] = defaultConfig.imagesPath + 'clock/'
+        defaultConfig['weatherImagesPath'] = defaultConfig.imagesPath + 'weather/' + defaultConfig.theme['weather_icon_set'] + '/'
+        this._config = defaultConfig;
     }
     shouldUpdate(changedProps) {
         var shouldUpdate = hasConfigOrEntityChanged(this, changedProps);
         if(shouldUpdate){
             HtcWeather.setHass = this.hass
+            this.render();
+
         }
         return shouldUpdate;
     }
@@ -187,172 +197,180 @@ class HtcWeather extends LitElement {
         
         return this.renderCard()
     }
-  	renderCard() {
-	  	this.numberElements++;
-	  	old_time = HtcWeather.getOldTime()
-	  	const stateObj = this.hass.states[this._config.entity];
-	    const root = this.shadowRoot;
-	    if (root.lastChild) root.removeChild(root.lastChild);
+    renderCard() {
+        if (!this.content) {
+          const card = document.createElement('ha-card');
+          this.content = document.createElement('div');
+          this.content.style.padding = '0 16px 16px';
+          card.appendChild(this.content);
+          this.appendChild(card);
+        }
+        this.numberElements++;
+        old_time = HtcWeather.getOldTime()
+        const stateObj = this.hass.states[this._config.entity];
+        const root = this.content;
+        if (root.lastChild) root.removeChild(root.lastChild);
 
-	    const script = document.createElement('script');
-	    script.textContent = this.getScript();
-	    root.appendChild(script);
+        const script = document.createElement('script');
+        script.textContent = this.getScript();
+        root.appendChild(script);
 
-	    const style = document.createElement('style');
-	    style.textContent = this.getStyle();
-	    root.appendChild(style);
+        const style = document.createElement('style');
+        style.textContent = this.getStyle(this._config);
+        root.appendChild(style);
 
-	    const card = document.createElement('ha-card');
-	    card.header = this._config.title;
-	    root.appendChild(card);
-	    var container_size = '470px'
-	    if(!this._config.renderForecast){
-	    	var container_size = '320px'
-	    }
-	    const container = document.createElement('div');
-	    container.id = 'htc-weather-card-container';
-	    // container.onclick = this._handleClick(this._config.entity)
-    	container.style = `height: ${container_size};background:url(${weatherDefaults.imagesPath}background.png) 50% 40px no-repeat;`	
-	    card.appendChild(container);
+        const card = document.createElement('ha-card');
+        card.header = this._config.title;
+        root.appendChild(card);
+        var container_size = '470px'
+        if(!this._config.renderForecast){
+            var container_size = '320px'
+        }
+        const container = document.createElement('div');
+        container.id = 'htc-weather-card-container';
+        // container.onclick = this._handleClick(this._config.entity)
+        container.style = `height: ${container_size};background:url(${this._config.imagesPath}background.png);`
+        card.appendChild(container);
 
-	    const htc_clock = document.createElement('div')
-	    htc_clock.id = 'htc-clock'
-	    htc_clock.classList.add(`htc-clock-${this.numberElements}`)
-	    container.appendChild(htc_clock)
+        const htc_clock = document.createElement('div')
+        htc_clock.id = 'htc-clock'
+        htc_clock.classList.add(`htc-clock-${this.numberElements}`)
+        container.appendChild(htc_clock)
 
-	    const htc_clock_hours = document.createElement('div')
-	    htc_clock_hours.id = 'hours'
-	    htc_clock.appendChild(htc_clock_hours)
+        const htc_clock_hours = document.createElement('div')
+        htc_clock_hours.id = 'hours'
+        htc_clock.appendChild(htc_clock_hours)
 
-	    const htc_clock_hours_line = document.createElement('div')
-	    htc_clock_hours_line.classList.add('line')
-	    htc_clock_hours.appendChild(htc_clock_hours_line)
+        const htc_clock_hours_line = document.createElement('div')
+        htc_clock_hours_line.classList.add('line')
+        htc_clock_hours.appendChild(htc_clock_hours_line)
 
-	    const hours_bg = document.createElement('div')
-	    hours_bg.id = 'hours_bg'
-	    htc_clock_hours.appendChild(hours_bg)
+        const hours_bg = document.createElement('div')
+        hours_bg.id = 'hours_bg'
+        htc_clock_hours.appendChild(hours_bg)
 
-	    const hours_bg_img = document.createElement('img')
-	    hours_bg_img.src = `${this._config.clockImagesPath + 'clockbg1.png'}`
-	    htc_clock_hours.appendChild(hours_bg_img)
+        const hours_bg_img = document.createElement('img')
+        hours_bg_img.src = `${this._config.clockImagesPath + 'clockbg1.png'}`
+        htc_clock_hours.appendChild(hours_bg_img)
 
-	    const hours_bg_first = document.createElement('img')
-	    hours_bg_first.id = 'fhd';
-	    hours_bg_first.src = `${this._config.clockImagesPath + old_time.firstHourDigit + '.png'}`
-	    hours_bg_first.classList.add('first_digit')
-	    htc_clock_hours.appendChild(hours_bg_first)
+        const hours_bg_first = document.createElement('img')
+        hours_bg_first.id = 'fhd';
+        hours_bg_first.src = `${this._config.clockImagesPath + old_time.firstHourDigit + '.png'}`
+        hours_bg_first.classList.add('first_digit')
+        htc_clock_hours.appendChild(hours_bg_first)
 
-	    const hours_bg_second = document.createElement('img')
-	    hours_bg_second.id = 'shd'
-	    hours_bg_second.src = `${this._config.clockImagesPath + old_time.secondHourDigit + '.png'}`
-	    hours_bg_second.classList.add('second_digit')
-	    htc_clock_hours.appendChild(hours_bg_second)
+        const hours_bg_second = document.createElement('img')
+        hours_bg_second.id = 'shd'
+        hours_bg_second.src = `${this._config.clockImagesPath + old_time.secondHourDigit + '.png'}`
+        hours_bg_second.classList.add('second_digit')
+        htc_clock_hours.appendChild(hours_bg_second)
 
-	    const htc_clock_minutes = document.createElement('div')
-	    htc_clock_minutes.id = 'minutes'
-	    htc_clock.appendChild(htc_clock_minutes)
+        const htc_clock_minutes = document.createElement('div')
+        htc_clock_minutes.id = 'minutes'
+        htc_clock.appendChild(htc_clock_minutes)
 
-	    const htc_clock_minutes_bg = document.createElement('div')
-	    htc_clock_minutes_bg.id = 'minutes_bg'
-	    htc_clock_minutes.appendChild(htc_clock_minutes_bg)
-	    
+        const htc_clock_minutes_bg = document.createElement('div')
+        htc_clock_minutes_bg.id = 'minutes_bg'
+        htc_clock_minutes.appendChild(htc_clock_minutes_bg)
+        
 
-	    const hours_min_img = document.createElement('img')
-	    hours_min_img.src = `${this._config.clockImagesPath + 'clockbg1.png'}`
-	    htc_clock_minutes.appendChild(hours_min_img)
+        const hours_min_img = document.createElement('img')
+        hours_min_img.src = `${this._config.clockImagesPath + 'clockbg1.png'}`
+        htc_clock_minutes.appendChild(hours_min_img)
 
-	    const htc_clock_minutes_line = document.createElement('div')
-	    htc_clock_minutes_line.classList.add('line')
-	    htc_clock_minutes.appendChild(htc_clock_minutes_line)
-	    
-	    if(this._config.am_pm !== false){
+        const htc_clock_minutes_line = document.createElement('div')
+        htc_clock_minutes_line.classList.add('line')
+        htc_clock_minutes.appendChild(htc_clock_minutes_line)
+        
+        if(this._config.am_pm !== false){
 
-	    	const htc_clock_am_pm = document.createElement('div')
-		    htc_clock_am_pm.id = 'am_pm'
-		    htc_clock.appendChild(htc_clock_am_pm)
+            const htc_clock_am_pm = document.createElement('div')
+            htc_clock_am_pm.id = 'am_pm'
+            htc_clock.appendChild(htc_clock_am_pm)
 
-		    const am_pm_img = document.createElement('img')
-		    am_pm_img.src = `${this._config.clockImagesPath +'am.png'}`
-		    htc_clock_am_pm.appendChild(am_pm_img)
-	    }
+            const am_pm_img = document.createElement('img')
+            am_pm_img.src = `${this._config.clockImagesPath +'am.png'}`
+            htc_clock_am_pm.appendChild(am_pm_img)
+        }
 
-	    const min_bg_first = document.createElement('img')
-	    min_bg_first.id = 'fmd'
-	    min_bg_first.src = `${this._config.clockImagesPath + old_time.firstMinuteDigit + '.png'}`
-	    min_bg_first.classList.add('first_digit')
-	    htc_clock_minutes.appendChild(min_bg_first)
+        const min_bg_first = document.createElement('img')
+        min_bg_first.id = 'fmd'
+        min_bg_first.src = `${this._config.clockImagesPath + old_time.firstMinuteDigit + '.png'}`
+        min_bg_first.classList.add('first_digit')
+        htc_clock_minutes.appendChild(min_bg_first)
 
-	    const min_bg_second = document.createElement('img')
-	    min_bg_second.id = 'smd'
-	    min_bg_second.src = `${this._config.clockImagesPath + old_time.secondMinuteDigit + '.png'}`
-	    min_bg_second.classList.add('second_digit')
-	    htc_clock_minutes.appendChild(min_bg_second)
+        const min_bg_second = document.createElement('img')
+        min_bg_second.id = 'smd'
+        min_bg_second.src = `${this._config.clockImagesPath + old_time.secondMinuteDigit + '.png'}`
+        min_bg_second.classList.add('second_digit')
+        htc_clock_minutes.appendChild(min_bg_second)
 
-	    const htc_weather = document.createElement('div')
-	    htc_weather.id = 'htc-weather'
-	    htc_weather.classList.add(`htc-weather-${this.numberElements}`)
-	    container.appendChild(htc_weather)
+        const htc_weather = document.createElement('div')
+        htc_weather.id = 'htc-weather'
+        htc_weather.classList.add(`htc-weather-${this.numberElements}`)
+        container.appendChild(htc_weather)
 
-	    const spinner = document.createElement('p')
-	    spinner.classList.add('loading')
-	    spinner.innerHTML = `Fetching weather...`
-	    htc_weather.appendChild(spinner)
+        const spinner = document.createElement('p')
+        spinner.classList.add('loading')
+        spinner.innerHTML = `Fetching weather...`
+        htc_weather.appendChild(spinner)
 
-	    if(!window.jQuery){
-	    	this.importJquery().then(function(result){
-		    	HtcWeather.setNewTime(htc_clock)
-		    	HtcWeather.setNewWeather(htc_weather)
-		    })	
-	    }else{
-	    	HtcWeather.setNewTime(htc_clock)
-	    	HtcWeather.setNewWeather(htc_weather)
-	    }
-  	}
+        if(!window.jQuery){
+            this.importJquery().then(function(result){
+                HtcWeather.setNewTime(htc_clock)
+                HtcWeather.setNewWeather(htc_weather)
+            })  
+        }else{
+            HtcWeather.setNewTime(htc_clock)
+            HtcWeather.setNewWeather(htc_weather)
+        }
+    }
     static setNewWeather(elem){
         var config = HtcWeather.getConfig;
         var stateObj = HtcWeather.getHass.states[HtcWeather.getConfig.entity];
         var hass_states = HtcWeather.getHass.states;
-    	var temp_now = Math.round(stateObj.attributes.temperature * 100) / 100
-    	var weatherIcon = HtcWeather.getWeatherIcon(config, stateObj.state)
+        var temp_now = Math.round(stateObj.attributes.temperature * 100) / 100
+        var weatherIcon = HtcWeather.getWeatherIcon(config, stateObj.state)
         var curr_temp = `<p class="temp">${String(temp_now)}
                        <span class="metric">
                        ${HtcWeather.getUnit("temperature")}</span></p>`;
-    	$(elem).css('background','url('
+        $(elem).css('background','url('
                  + weatherIcon 
                  + ') 50% 0 no-repeat');
-     	var weather = `<div id="local">
+        var weather = `<div id="local">
                             <p class="city">${stateObj.attributes.friendly_name}</p>
                             ${curr_temp}
                         </div>`;
         weather += HtcWeather.getHighLow();
         
-      	weather += '</p></div>';
-     	// weather += '<div id="temp"><p id="date">&nbsp</p>'  + curr_temp + '</div>';
+        weather += '</p></div>';
+        // weather += '<div id="temp"><p id="date">&nbsp</p>'  + curr_temp + '</div>';
 
-     	$(elem).html(weather);
-     	if(config.renderForecast){
-     		$(elem).append('<ul id="forecast"></ul>');
+        $(elem).html(weather);
+        if(config.renderForecast){
+            var ulElement = `<ul id="forecast"></ul>`;
+            $(elem).append(ulElement);
          
-			for (var i = 0; i <= 3; i++) {
+            for (var i = 0; i <= 3; i++) {
 
-				var d_day_code = String(i) + '_resume';
-				var d_date = new Date(stateObj.attributes.forecast[i].datetime);
+                var d_day_code = String(i) + '_resume';
+                var d_date = new Date(stateObj.attributes.forecast[i].datetime);
                 var forecastIcon =  HtcWeather.getWeatherIcon(config, stateObj.attributes.forecast[i].condition, hass_states)
-				var forecast = `<li>`;
-				forecast    += `<p class="dayname">${regional[config.lang]['dayNames'][d_date.getDay()]}&nbsp;${d_date.getDate()}</p>
-				                <img src="${forecastIcon}" alt="${stateObj.attributes.forecast[i].condition}" title="${stateObj.attributes.forecast[i].condition}" />
-				                <div class="daytemp">${Math.round(stateObj.attributes.forecast[i].temperature * 100) / 100}${this.getUnit("temperature")}`
-				if(stateObj.attributes.forecast[i].templow){
-		      		forecast += `&nbsp;/&nbsp;${Math.round(stateObj.attributes.forecast[i].templow * 100) / 100}${this.getUnit("temperature")}`;
-		      	}
-		      	forecast += `</div></li>`;
-				$(elem).find('#forecast').append(forecast);
-     		}
-	    }
-	    if(config.renderDetails){
-	    	HtcWeather.renderDetails(elem, config,stateObj,hass_states)	
-	    }
-	}
+                var forecast = `<li>`;
+                forecast    += `<p class="dayname">${regional[config.lang]['dayNames'][d_date.getDay()]}&nbsp;${d_date.getDate()}</p>
+                                <img src="${forecastIcon}" alt="${stateObj.attributes.forecast[i].condition}" title="${stateObj.attributes.forecast[i].condition}" />
+                                <div class="daytemp">${Math.round(stateObj.attributes.forecast[i].temperature * 100) / 100}${this.getUnit("temperature")}`
+                if(stateObj.attributes.forecast[i].templow){
+                    forecast += `&nbsp;/&nbsp;${Math.round(stateObj.attributes.forecast[i].templow * 100) / 100}${this.getUnit("temperature")}`;
+                }
+                forecast += `</div></li>`;
+                $(elem).find('#forecast').append(forecast);
+            }
+        }
+        if(config.renderDetails){
+            HtcWeather.renderDetails(elem, config,stateObj,hass_states) 
+        }
+    }
 
     static getHighLow(){
         var config = HtcWeather.getConfig
@@ -370,7 +388,7 @@ class HtcWeather extends LitElement {
             high_low_state = Math.round(stateObj.attributes.forecast[0].temperature * 100) / 100+'&deg'
             var high_low_date = today_date;
         }
-        returnEntityHtml += `<div id="temp"><p id="date">&nbsp${high_low_date}</p><p class="high_low">
+        returnEntityHtml += `<div id="temp"><p id="date">&nbsp${high_low_date}</p>
                         ${high_low_state}`
         if(is_forecast && stateObj.attributes.forecast[0].templow){
             returnEntityHtml += `&nbsp;/&nbsp;${Math.round(stateObj.attributes.forecast[0].templow * 100) / 100}&deg;`;
@@ -400,14 +418,14 @@ class HtcWeather extends LitElement {
         var firstMinuteDigit = old_minutes.substr(0,1);
         var secondMinuteDigit = old_minutes.substr(1,1);
         var old_time = {
-        	firstHourDigit : firstHourDigit,
-        	secondHourDigit: secondHourDigit,
-        	firstMinuteDigit : firstMinuteDigit,
-        	secondMinuteDigit: secondMinuteDigit,
-        	old_hours:old_hours,
-        	old_minutes:old_minutes
-		}
-		return old_time
+            firstHourDigit : firstHourDigit,
+            secondHourDigit: secondHourDigit,
+            firstMinuteDigit : firstMinuteDigit,
+            secondMinuteDigit: secondMinuteDigit,
+            old_hours:old_hours,
+            old_minutes:old_minutes
+        }
+        return old_time
         // set minutes
     }
     static setNewTime(elem){
@@ -440,7 +458,7 @@ class HtcWeather extends LitElement {
         var firstMinuteDigit = old_minutes.substr(0,1);
         var secondMinuteDigit = old_minutes.substr(1,1);
 
-    	if (secondMinuteDigit != '9') {
+        if (secondMinuteDigit != '9') {
             firstMinuteDigit = firstMinuteDigit + '1';
         }
 
@@ -528,8 +546,8 @@ class HtcWeather extends LitElement {
             },600);
 
             setTimeout(function() {
-            	$(shd).attr('src', config.clockImagesPath + secondHourDigit + '-1.png');
-            	$(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg2.png');
+                $(shd).attr('src', config.clockImagesPath + secondHourDigit + '-1.png');
+                $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg2.png');
             },200);
             setTimeout(function() { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png')},250);
             setTimeout(function() {
@@ -561,34 +579,34 @@ class HtcWeather extends LitElement {
         }
     }
 
-  	static renderDetails(elem, config,stateObj,hass_states) {
-  	
-	    const sun = hass_states["sun.sun"];
-	    let next_rising;
-	    let next_setting;
+    static renderDetails(elem, config,stateObj,hass_states) {
+    
+        const sun = hass_states["sun.sun"];
+        let next_rising;
+        let next_setting;
 
-	    if (sun) {
-	      	next_rising = new Date(sun.attributes.next_rising);
-	      	next_setting = new Date(sun.attributes.next_setting);
-	      	$(elem).append(`<div id="bottom">
-	      		<div id="sun_details"></div>
-	      		<div id="wind_details"></div>
-	      		<div id="update">
-	      			<img src="${config.imagesPath}refresh_grey.png" alt="Last update" title="Last update" id="reload" />${new Date(stateObj.last_updated).toLocaleTimeString()}
-      			</div>
-  			</div>`);
-	    	var sun_details = `<font color="orange">☀</font> <font color="green"><ha-icon icon="mdi:weather-sunset-up"></ha-icon></font>&nbsp;${next_rising.toLocaleTimeString()}&nbsp;&nbsp;&nbsp;<font color="red"><ha-icon icon="mdi:weather-sunset-down"></ha-icon></font>&nbsp;${next_setting.toLocaleTimeString()}`;
-	    	$(elem).find('#sun_details').append(sun_details);	
-		    $(elem).find('#wind_details').append(`
-		    		<span class="ha-icon"><ha-icon icon="mdi:weather-windy"></ha-icon></span>
-		    		${
-		                windDirections[
-		                  parseInt((stateObj.attributes.wind_bearing + 11.25) / 22.5)
-		                ]
-		          	} ${stateObj.attributes.wind_speed}<span class="unit">
-                	${this.getUnit("length")}/h</span>
-		    	`);
-	    }
+        if (sun) {
+            next_rising = new Date(sun.attributes.next_rising);
+            next_setting = new Date(sun.attributes.next_setting);
+            $(elem).append(`<div id="bottom">
+                <div id="sun_details"></div>
+                <div id="wind_details"></div>
+                <div id="update">
+                    <img src="${config.imagesPath}refresh_grey.png" alt="Last update" title="Last update" id="reload" />${new Date(stateObj.last_updated).toLocaleTimeString()}
+                </div>
+            </div>`);
+            var sun_details = `<font color="orange">☀</font> <font color="green"><ha-icon icon="mdi:weather-sunset-up"></ha-icon></font>&nbsp;${next_rising.toLocaleTimeString()}&nbsp;&nbsp;&nbsp;<font color="red"><ha-icon icon="mdi:weather-sunset-down"></ha-icon></font>&nbsp;${next_setting.toLocaleTimeString()}`;
+            $(elem).find('#sun_details').append(sun_details);   
+            $(elem).find('#wind_details').append(`
+                    <span class="ha-icon"><ha-icon icon="mdi:weather-windy"></ha-icon></span>
+                    ${
+                        windDirections[
+                          parseInt((stateObj.attributes.wind_bearing + 11.25) / 22.5)
+                        ]
+                    } ${stateObj.attributes.wind_speed}<span class="unit">
+                    ${this.getUnit("length")}/h</span>
+                `);
+        }
         return
     }
 
@@ -610,214 +628,8 @@ class HtcWeather extends LitElement {
     }
     getScript(){}
 
-    getStyle() {
-        return css`
-
-            #htc-weather-card-container {
-    		    width:440px;
-    		    height:448px;
-    		    background:url(images/background.png) 50% 40px no-repeat;
-    		    position:relative;
-    		    overflow:hidden;
-    		    font-family:Arial, Verdana, Tahoma, Helvetica, sans-serif;
-    		    margin: auto;
-    		}
-
-    		#htc-weather-card-container p {
-    		    margin:0;
-    		    padding:0;
-    		}
-
-    		#htc-clock {
-    		    float:left;
-    		    margin-left:18px;
-    		}
-
-    		#hours, #minutes {
-    		    width:200px;
-    		    height:200px;
-    		    float:left;
-    		    position:relative;
-    		}
-
-    		#minutes {
-    		    margin-left:4px;
-    		}
-
-    		#hours_bg, #minutes_bg {
-    		    width:100%;
-    		    height:100%;
-    		    position:absolute;
-    		    top:0;
-    		    left:0;
-    		    z-index:99;
-    		}
-
-    		.first_digit {
-    		    width:80px;
-    		    height:100%;
-    		    position:absolute;
-    		    top:0;
-    		    left:20px;
-    		    z-index:100;
-    		}
-
-    		.second_digit {
-    		    width:80px;
-    		    height:100%;
-    		    position:absolute;
-    		    top:0;
-    		    left:100px;
-    		    z-index:100;
-    		}
-
-    		.line {
-    		    width:175px;
-    		    height:2px;
-    		    background:#efefef;
-    		    position:absolute;
-    		    top:97px;
-    		    left:12px;
-    		    z-index:101;
-    		    font-size:1px;
-    		}
-
-    		#am_pm {
-    		    position:absolute;
-    		    top:156px;
-    		    left:130px;
-    		    z-index:110;
-    		}
-
-
-    		#htc-weather {
-    		    width:100%;
-    		    height:313px;
-    		    position:absolute;
-    		    top:135px;
-    		    left:0;
-    		    z-index:105;
-    		}
-
-    		#htc-weather .loading {
-    		    float:left;
-    		    margin:90px 0 0 45px;
-    		}
-    		#htc-weather #local {
-    		    float:left;
-    		    margin:70px 0 0 15px;
-    		    color: #fff
-    		}
-
-    		.city {
-    		    font-size:14pt;
-    		}
-    		.high_low {
-    		    font-size:18pt;
-    		}
-
-    		#htc-weather #temp {
-    		    float:right;
-    		    margin:70px 15px 0 0;
-    		    text-align:right;
-    		    color:#fff
-    		}
-
-    		#htc-weather #date {
-    		    font-size:14pt;
-    		    padding-right:2px;
-    		}
-
-    		.temp {
-    		    font-size:18pt;
-    		    padding:0;
-    		}
-
-    		.temp .metric {
-    		    margin-left:-3px;
-    		}
-
-
-    		#htc-weather #forecast {
-    		    width:440px;
-    		    height:100px;
-    		    list-style:none;
-    		    margin:175px 0 0 0px;
-    		    padding:0;
-    		    position: relative;
-    		}
-    		#htc-weather #forecast li:first-child {
-    		    border-left: 0px solid;
-    		}
-    		#htc-weather #forecast li {
-    		    width:24%;
-    		    height:100%;
-    		    float:left;
-    		    text-align:center;
-    		    border-left: 0.1em solid rgb(217, 217, 217);
-    		}
-    		
-
-    		#htc-weather #forecast li p {
-    		    width:100%;
-    		    height:15px;
-    		    margin:0;
-    		    padding:0;
-    		    font-size:18pt;
-    		    line-height:20px;
-    		}
-
-    		#htc-weather #forecast li .dayname {
-    		    font-size:12pt;
-    		    font-weight: bold;
-    		}
-
-    		#htc-weather #forecast li img {
-    		    width:106px;
-    		}
-
-    		#htc-weather #forecast li .daytemp {
-    		    position:absolute;
-    		    bottom: 0px;
-    		    width: 25%;
-    		    text-align:center;
-    		    font-weight: bold
-    		}
-
-
-    		#htc-weather #bottom {
-    		    text-align:right;
-    		    margin: 0px 14px 0px 1px;
-    		    height: 25px;
-    		}
-    		#htc-weather #sun_details {
-    		    margin: 4px 0px 0px 0px;
-    		    float: left;
-    		    text-align:left;
-    		    font-size: 14px;
-    		}
-
-    		#htc-weather #wind_details{
-    			margin: 4px 0px 0px 0px;
-    		    float: right;
-    		    text-align: left;
-    		    font-size: 14px;
-    		}
-
-    		#htc-weather #update {
-    		    margin:4px 0px 0px 0px;
-    		    float:right;
-    		    text-align:right;
-    		    font-size:10px;
-    		    clear: both;
-    		}
-
-    		#htc-weather #update img {
-    		    margin:-2px 4px 0 0;
-    		    vertical-align:middle;
-    		    width: 10px;
-    		}
-        `;
+    getStyle(config) {
+        return themes[config.theme['name']]['css'];
     }
 }
 customElements.define("htc-weather-card", HtcWeather);
