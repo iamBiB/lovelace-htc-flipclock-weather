@@ -9,7 +9,8 @@ HTC Flip clock with weather for [Home Assistant](https://github.com/home-assista
 ![image](https://user-images.githubusercontent.com/12171894/78888854-2b9cb100-7a6b-11ea-908a-949fbc2dd867.png)
 ### With custom entity
 ![image](https://user-images.githubusercontent.com/12171894/78868363-7ad2e980-7a4b-11ea-8d70-e10dd342c715.png)
-
+### With a theme
+![image](https://user-images.githubusercontent.com/12171894/96269414-02894a00-0fd3-11eb-9d23-37402ad2de36.png)
 
 # Support
 Hey dude! If you like it .. well :beers: or a :coffee: would be nice :D
@@ -46,7 +47,7 @@ display_options:
 
     ```yaml
     resources:
-      - url: /local/custom_ui/htc-weather/htc-flipclock-weather.js?v1.1.4
+      - url: /local/custom_ui/htc-weather/htc-flipclock-weather.js?v1.2.0
         type: module
     ```
 
@@ -67,33 +68,60 @@ display_options:
 | type | string | **required** | `custom:htc-weather-card`
 | entity | string | **required** | The entity_id from an entity within the `weather` domain.
 | name | string | optional | Set a custom name.
-| lang | string | optional | Set a language (ro/en available).
+| lang | string | optional | Set a language (ro/en/nl/cz available).
 | am_pm | string | optional | Set clock in AM/PM format.
 | svrOffset | int | optional | If you need offset on time (seconds).
 | renderForecast | bool | optional | Render forecast (only 4 days).
 | renderClock | bool | optional | Render clock.
 | renderDetails | bool | optional | Render sunt details and wind.
 | high_low_entity | bool | optional | Replace high / low temperature with a custom entity. Params available entity_id, name. Default high / low temperature today
-
+| renderDetails | bool | optional | Render sunt details and wind.
+| theme.name |  | optional | Change theme (default/dusk).
+| theme.weather_icon_set |  | optional | Change theme icon set. For default you have `picto` alternative. For dusk you have `htc` alternative
 
 ### Example usage
 
 #### Standard card
 ```yaml
-- type: 'custom:htc-weather-card'
+  type: 'custom:htc-weather-card'
   entity: weather.home
   sun: sun.sun
 ```
 #### With custom high_low_entity entity
 ```yaml
-- type: 'custom:htc-weather-card'
+  type: 'custom:htc-weather-card'
   entity: weather.dark_sky
   sun: sun.sun
   high_low_entity:
     entity_id: sensor.time_utc
     name: UTC Time
 ```
-
+#### Using a theme
+```yaml
+  type: 'custom:htc-weather-card'
+  entity: weather.dark_sky
+  high_low_entity:
+    entity_id: sensor.time_utc
+    name: UTC Time
+  renderForecast: true
+  sun: sun.sun
+  theme:
+    name: dusk
+    weather_icon_set: default
+```
+#### Using a theme with custom icons
+```yaml
+  type: 'custom:htc-weather-card'
+  entity: weather.dark_sky
+  high_low_entity:
+    entity_id: sensor.time_utc
+    name: UTC Time
+  renderForecast: true
+  sun: sun.sun
+  theme:
+    name: dusk
+    weather_icon_set: htc
+```
 ## Problems?
 There might be :D .. So give me a shout for issues or even updates :D
 
