@@ -18,5 +18,10 @@ export const regional = {
 		monthNames: ['Led', 'Ún', 'Bře', 'Dub', 'Kvě', 'Črv', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'],
 		dayNames: ['Ne', 'Po', 'Út', 'Stř', 'Čt', 'Pá', 'So'],
 		lang: 'cz'
+	},
+	'sv':{
+		monthNames: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'],
+		dayNames: ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'],
+		lang: 'sv'
 	}
 };
