@@ -1,6 +1,13 @@
-const LitElement = Object.getPrototypeOf(customElements.get("hui-view"));
-const html = LitElement.prototype.html;
-const css = LitElement.prototype.css;
+import "https://unpkg.com/wired-card@0.8.1/wired-card.js?module";
+import "https://unpkg.com/wired-toggle@0.8.0/wired-toggle.js?module";
+import {
+  LitElement,
+  html,
+  css
+} from "https://unpkg.com/lit-element@2.0.1/lit-element.js?module";
+// const LitElement = Object.getPrototypeOf(customElements.get("hui-view"));
+// const html = LitElement.prototype.html;
+// const css = LitElement.prototype.css;
 var old_time = {}
 var intervalSetNewTime = ''
 import { regional } from './regional.js?v1.1.4';
@@ -24,7 +31,7 @@ weatherDefaults['imagesPath'] = weatherDefaults.widgetPath + 'themes/' + weather
 weatherDefaults['clockImagesPath'] = weatherDefaults.imagesPath + 'clock/'
 weatherDefaults['weatherImagesPath'] = weatherDefaults.imagesPath + 'weather/' + weatherDefaults.theme['weather_icon_set'] + '/'
 
-const htcVersion = "1.2.1";
+const htcVersion = "1.3.0";
 
 
 const weatherIconsDay = {
@@ -106,6 +113,7 @@ function hasConfigOrEntityChanged(element, changedProps) {
 }
 console.info("%c HTC Flip Clock %c ".concat(htcVersion, " "), "color: white; background: #555555; ", "color: white; background: #3a7ec6; ");
 class HtcWeather extends LitElement {
+    numberElements = 0
     static get getConfig(){
         return this._config;
     }
@@ -136,7 +144,7 @@ class HtcWeather extends LitElement {
 
     setConfig(config) {
         if (!config.entity) {
-            throw new Error("Please define a weather entity");
+            throw new Error(`Entity not available/installed: ${config.entity}`);
         }
         var defaultConfig = {}
         for (const property in config) {
@@ -163,6 +171,7 @@ class HtcWeather extends LitElement {
     }
 
     render() {
+        this.numberElements = 0
         if (!this._config || !this.hass) {
             return html``;
         }
@@ -178,24 +187,14 @@ class HtcWeather extends LitElement {
             }
         }
 
-        if (!entity) {
-          return html`
-            <style>
-              .not-found {
-                flex: 1;
-                background-color: red;
-                padding: 8px;
-              }
-            </style>
-            <ha-card>
-              <div class="not-found">
-                Entity not available/installed: ${entity_name}
-              </div>
-            </ha-card>
-          `;
-        }
         
-        return this.renderCard()
+        
+        // return this.renderCard()
+        return html`
+          <ha-card @click="${this._handleClick}">
+            ${this.renderCard(stateObj.attributes.forecast)}
+          </ha-card>
+        `;
     }
     renderCard() {
         if (!this.content) {
@@ -210,6 +209,7 @@ class HtcWeather extends LitElement {
         const stateObj = this.hass.states[this._config.entity];
         const root = this.content;
         if (root.lastChild) root.removeChild(root.lastChild);
+        root.innerHTML = ''
 
         const script = document.createElement('script');
         script.textContent = this.getScript();
@@ -324,8 +324,10 @@ class HtcWeather extends LitElement {
             HtcWeather.setNewTime(htc_clock)
             HtcWeather.setNewWeather(htc_weather)
         }
+        return html`${root}`
     }
     static setNewWeather(elem){
+        $(elem).html('wtf')
         var config = HtcWeather.getConfig;
         var stateObj = HtcWeather.getHass.states[HtcWeather.getConfig.entity];
         var hass_states = HtcWeather.getHass.states;
@@ -580,7 +582,6 @@ class HtcWeather extends LitElement {
     }
 
     static renderDetails(elem, config,stateObj,hass_states) {
-    
         const sun = hass_states["sun.sun"];
         let next_rising;
         let next_setting;
@@ -629,7 +630,14 @@ class HtcWeather extends LitElement {
     getScript(){}
 
     getStyle(config) {
+
         return themes[config.theme['name']]['css'];
     }
+    static get styles() {
+        // return css(themes[this._config.theme['name']]['css']);
+    }
+
+
 }
 customElements.define("htc-weather-card", HtcWeather);
+
