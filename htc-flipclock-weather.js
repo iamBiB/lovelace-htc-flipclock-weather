@@ -5,13 +5,10 @@ import {
   html,
   css
 } from "https://unpkg.com/lit-element@2.0.1/lit-element.js?module";
-// const LitElement = Object.getPrototypeOf(customElements.get("hui-view"));
-// const html = LitElement.prototype.html;
-// const css = LitElement.prototype.css;
 var old_time = {}
 var intervalSetNewTime = ''
-import { regional } from './regional.js?v1.1.4';
-import { themes } from './themes.js?v1.0.1';
+import { regional } from './regional.js?v1.1.5';
+import { themes } from './themes.js?v1.0.2';
 
 const weatherDefaults = {
     widgetPath: '/local/custom_ui/htc-weather/',
@@ -31,7 +28,7 @@ weatherDefaults['imagesPath'] = weatherDefaults.widgetPath + 'themes/' + weather
 weatherDefaults['clockImagesPath'] = weatherDefaults.imagesPath + 'clock/'
 weatherDefaults['weatherImagesPath'] = weatherDefaults.imagesPath + 'weather/' + weatherDefaults.theme['weather_icon_set'] + '/'
 
-const htcVersion = "1.3.0";
+const htcVersion = "1.3.2";
 
 
 const weatherIconsDay = {
@@ -63,25 +60,6 @@ const weatherIconsNight = {
 };
 
 
-const windDirections = [
-    "N",
-    "NNE",
-    "NE",
-    "ENE",
-    "E",
-    "ESE",
-    "SE",
-    "SSE",
-    "S",
-    "SSW",
-    "SW",
-    "WSW",
-    "W",
-    "WNW",
-    "NW",
-    "NNW",
-    "N"
-];
 
 const fireEvent = (node, type, detail, options) => {
     options = options || {};
@@ -148,7 +126,13 @@ class HtcWeather extends LitElement {
         }
         var defaultConfig = {}
         for (const property in config) {
-            defaultConfig[property] = config[property]
+        	defaultConfig[property] = config[property]
+        	if(property == 'lang'){
+        		if(!regional[config[property]]){
+        			defaultConfig[property] = weatherDefaults[property]
+        		}
+        	}
+
         }
         for (const property in weatherDefaults) {
             if(config[property] === undefined){
@@ -200,7 +184,7 @@ class HtcWeather extends LitElement {
         if (!this.content) {
           const card = document.createElement('ha-card');
           this.content = document.createElement('div');
-          this.content.style.padding = '0 16px 16px';
+          this.content.style.padding = '16px 16px 16px';
           card.appendChild(this.content);
           this.appendChild(card);
         }
@@ -600,11 +584,7 @@ class HtcWeather extends LitElement {
             $(elem).find('#sun_details').append(sun_details);   
             $(elem).find('#wind_details').append(`
                     <span class="ha-icon"><ha-icon icon="mdi:weather-windy"></ha-icon></span>
-                    ${
-                        windDirections[
-                          parseInt((stateObj.attributes.wind_bearing + 11.25) / 22.5)
-                        ]
-                    } ${stateObj.attributes.wind_speed}<span class="unit">
+                    ${regional[config.lang]['windDirections'][parseInt((stateObj.attributes.wind_bearing + 11.25) / 22.5)]} ${stateObj.attributes.wind_speed} ${stateObj.attributes.wind_speed}<span class="unit">
                     ${this.getUnit("length")}/h</span>
                 `);
         }

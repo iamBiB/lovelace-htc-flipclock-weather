@@ -47,7 +47,7 @@ display_options:
 
     ```yaml
     resources:
-      - url: /local/custom_ui/htc-weather/htc-flipclock-weather.js?v1.2.0
+      - url: /local/custom_ui/htc-weather/htc-flipclock-weather.js?v1.3.2
         type: module
     ```
 

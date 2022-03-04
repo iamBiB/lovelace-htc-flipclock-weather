@@ -227,6 +227,7 @@ export const themes = {
     		#htc-clock {
     		    float:left;
     		    margin-left:18px;
+
     		}
 
     		#hours, #minutes {
@@ -338,7 +339,7 @@ export const themes = {
     		    width:440px;
     		    height:100px;
     		    list-style:none;
-    		    margin:175px 0 0 0px;
+    		    margin:150px 0 0 0px;
     		    padding:0;
     		    position: relative;
     		    background-repeat: no-repeat;
@@ -417,3 +418,4 @@ export const themes = {
     		}`
 	}
 };
+
