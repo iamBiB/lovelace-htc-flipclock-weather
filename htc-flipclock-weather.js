@@ -1,15 +1,16 @@
 import "https://unpkg.com/wired-card@0.8.1/wired-card.js?module";
 import "https://unpkg.com/wired-toggle@0.8.0/wired-toggle.js?module";
 import {
-  LitElement,
-  html,
-  css
+    LitElement,
+    html,
+    css
 } from "https://unpkg.com/lit-element@2.0.1/lit-element.js?module";
 var old_time = {}
 var intervalSetNewTime = ''
 import { regional } from './regional.js?v1.1.5';
 import { themes } from './themes.js?v1.0.2';
-
+var forecastFinished = false;
+var forecasts = {};
 const weatherDefaults = {
     widgetPath: '/local/custom_ui/htc-weather/',
     lang: 'en',
@@ -28,7 +29,7 @@ weatherDefaults['imagesPath'] = weatherDefaults.widgetPath + 'themes/' + weather
 weatherDefaults['clockImagesPath'] = weatherDefaults.imagesPath + 'clock/'
 weatherDefaults['weatherImagesPath'] = weatherDefaults.imagesPath + 'weather/' + weatherDefaults.theme['weather_icon_set'] + '/'
 
-const htcVersion = "1.3.2";
+const htcVersion = "1.4";
 
 
 const weatherIconsDay = {
@@ -92,16 +93,16 @@ function hasConfigOrEntityChanged(element, changedProps) {
 console.info("%c HTC Flip Clock %c ".concat(htcVersion, " "), "color: white; background: #555555; ", "color: white; background: #3a7ec6; ");
 class HtcWeather extends LitElement {
     numberElements = 0
-    static get getConfig(){
+    static get getConfig() {
         return this._config;
     }
-    static set setConfig(config){
+    static set setConfig(config) {
         this._config = config;
     }
-    static get getHass(){
+    static get getHass() {
         return this.hass;
     }
-    static set setHass(hass){
+    static set setHass(hass) {
         this.hass = hass;
     }
     static get properties() {
@@ -113,7 +114,7 @@ class HtcWeather extends LitElement {
 
     async importJquery() {
         await import("./lib/jquery-3.4.1.min.js")
-        return {config:this._config, entity: this.hass.states[this._config.entity], hass_states:this.hass.states}
+        return { config: this._config, entity: this.hass.states[this._config.entity], hass_states: this.hass.states }
     }
 
     static getStubConfig() {
@@ -126,16 +127,16 @@ class HtcWeather extends LitElement {
         }
         var defaultConfig = {}
         for (const property in config) {
-        	defaultConfig[property] = config[property]
-        	if(property == 'lang'){
-        		if(!regional[config[property]]){
-        			defaultConfig[property] = weatherDefaults[property]
-        		}
-        	}
+            defaultConfig[property] = config[property]
+            if (property == 'lang') {
+                if (!regional[config[property]]) {
+                    defaultConfig[property] = weatherDefaults[property]
+                }
+            }
 
         }
         for (const property in weatherDefaults) {
-            if(config[property] === undefined){
+            if (config[property] === undefined) {
                 defaultConfig[property] = weatherDefaults[property]
             }
         }
@@ -146,47 +147,77 @@ class HtcWeather extends LitElement {
     }
     shouldUpdate(changedProps) {
         var shouldUpdate = hasConfigOrEntityChanged(this, changedProps);
-        if(shouldUpdate){
+        if (shouldUpdate) {
             HtcWeather.setHass = this.hass
             this.render();
-
+        }
+        if (!forecastFinished) {
+            this.updateForecasts()
         }
         return shouldUpdate;
     }
+    updateForecasts() {
+        if (!this._config || !this.hass) {
+            return;
+        }
+        const self = this;
+        HtcWeather.setConfig = this._config
+        HtcWeather.setHass = this.hass
+        var entity = this._config.entity;
+        var entity_name = this._config.entity;
+        if (this._config.high_low_entity) {
+            if (!this.hass.states[this._config.high_low_entity.entity_id]) {
+                entity = this.hass.states[this._config.high_low_entity.entity_id]
+                entity_name = this._config.high_low_entity.entity_id;
+            }
+        }
+        if (!this._config.high_low_entity) {
+            HtcWeather.getHass.callService('weather', 'get_forecasts', { 'type': 'daily' }, { 'entity_id': self._config.entity }, false, true).then(function (res) {
+                forecastFinished = true;
+                forecasts = res.response[self._config.entity].forecast
+            })
+        }
+        this.render();
 
+    }
     render() {
+        const self = this;
         this.numberElements = 0
         if (!this._config || !this.hass) {
             return html``;
         }
         HtcWeather.setConfig = this._config
         HtcWeather.setHass = this.hass
-        const stateObj = this.hass.states[this._config.entity];
         var entity = this._config.entity;
         var entity_name = this._config.entity;
-        if(this._config.high_low_entity){
-            if(!this.hass.states[this._config.high_low_entity.entity_id]){
+        if (this._config.high_low_entity) {
+            if (!this.hass.states[this._config.high_low_entity.entity_id]) {
                 entity = this.hass.states[this._config.high_low_entity.entity_id]
                 entity_name = this._config.high_low_entity.entity_id;
             }
         }
 
-        
-        
-        // return this.renderCard()
+        if (forecastFinished) {
+            return html``
+        }
         return html`
-          <ha-card @click="${this._handleClick}">
-            ${this.renderCard(stateObj.attributes.forecast)}
-          </ha-card>
+            <ha-card @click="${this._handleClick}">
+            ${self.renderCard()}
+            </ha-card>
         `;
+    }
+    waitForForecasts() {
+        if (forecastFinished === false) {
+            setTimeout(this.waitForForecasts, 1000); /* this checks the flag every 100 milliseconds*/
+        }
     }
     renderCard() {
         if (!this.content) {
-          const card = document.createElement('ha-card');
-          this.content = document.createElement('div');
-          this.content.style.padding = '16px 16px 16px';
-          card.appendChild(this.content);
-          this.appendChild(card);
+            const card = document.createElement('ha-card');
+            this.content = document.createElement('div');
+            this.content.style.padding = '16px 16px 16px';
+            card.appendChild(this.content);
+            this.appendChild(card);
         }
         this.numberElements++;
         old_time = HtcWeather.getOldTime()
@@ -207,7 +238,7 @@ class HtcWeather extends LitElement {
         card.header = this._config.title;
         root.appendChild(card);
         var container_size = '470px'
-        if(!this._config.renderForecast){
+        if (!this._config.renderForecast) {
             var container_size = '320px'
         }
         const container = document.createElement('div');
@@ -256,7 +287,7 @@ class HtcWeather extends LitElement {
         const htc_clock_minutes_bg = document.createElement('div')
         htc_clock_minutes_bg.id = 'minutes_bg'
         htc_clock_minutes.appendChild(htc_clock_minutes_bg)
-        
+
 
         const hours_min_img = document.createElement('img')
         hours_min_img.src = `${this._config.clockImagesPath + 'clockbg1.png'}`
@@ -265,15 +296,15 @@ class HtcWeather extends LitElement {
         const htc_clock_minutes_line = document.createElement('div')
         htc_clock_minutes_line.classList.add('line')
         htc_clock_minutes.appendChild(htc_clock_minutes_line)
-        
-        if(this._config.am_pm !== false){
+
+        if (this._config.am_pm !== false) {
 
             const htc_clock_am_pm = document.createElement('div')
             htc_clock_am_pm.id = 'am_pm'
             htc_clock.appendChild(htc_clock_am_pm)
 
             const am_pm_img = document.createElement('img')
-            am_pm_img.src = `${this._config.clockImagesPath +'am.png'}`
+            am_pm_img.src = `${this._config.clockImagesPath + 'am.png'}`
             htc_clock_am_pm.appendChild(am_pm_img)
         }
 
@@ -299,19 +330,18 @@ class HtcWeather extends LitElement {
         spinner.innerHTML = `Fetching weather...`
         htc_weather.appendChild(spinner)
 
-        if(!window.jQuery){
-            this.importJquery().then(function(result){
+        if (!window.jQuery) {
+            this.importJquery().then(function (result) {
                 HtcWeather.setNewTime(htc_clock)
                 HtcWeather.setNewWeather(htc_weather)
-            })  
-        }else{
+            })
+        } else {
             HtcWeather.setNewTime(htc_clock)
             HtcWeather.setNewWeather(htc_weather)
         }
         return html`${root}`
     }
-    static setNewWeather(elem){
-        $(elem).html('wtf')
+    static setNewWeather(elem) {
         var config = HtcWeather.getConfig;
         var stateObj = HtcWeather.getHass.states[HtcWeather.getConfig.entity];
         var hass_states = HtcWeather.getHass.states;
@@ -320,129 +350,129 @@ class HtcWeather extends LitElement {
         var curr_temp = `<p class="temp">${String(temp_now)}
                        <span class="metric">
                        ${HtcWeather.getUnit("temperature")}</span></p>`;
-        $(elem).css('background','url('
-                 + weatherIcon 
-                 + ') 50% 0 no-repeat');
+        $(elem).css('background', 'url('
+            + weatherIcon
+            + ') 50% 0 no-repeat');
         var weather = `<div id="local">
                             <p class="city">${stateObj.attributes.friendly_name}</p>
                             ${curr_temp}
                         </div>`;
         weather += HtcWeather.getHighLow();
-        
+
         weather += '</p></div>';
         // weather += '<div id="temp"><p id="date">&nbsp</p>'  + curr_temp + '</div>';
 
         $(elem).html(weather);
-        if(config.renderForecast){
+        if (config.renderForecast) {
             var ulElement = `<ul id="forecast"></ul>`;
             $(elem).append(ulElement);
-         
+
             for (var i = 0; i <= 3; i++) {
 
                 var d_day_code = String(i) + '_resume';
-                var d_date = new Date(stateObj.attributes.forecast[i].datetime);
-                var forecastIcon =  HtcWeather.getWeatherIcon(config, stateObj.attributes.forecast[i].condition, hass_states)
+                var d_date = new Date(forecasts[i].datetime);
+                var forecastIcon = HtcWeather.getWeatherIcon(config, forecasts[i].condition, hass_states)
                 var forecast = `<li>`;
-                forecast    += `<p class="dayname">${regional[config.lang]['dayNames'][d_date.getDay()]}&nbsp;${d_date.getDate()}</p>
-                                <img src="${forecastIcon}" alt="${stateObj.attributes.forecast[i].condition}" title="${stateObj.attributes.forecast[i].condition}" />
-                                <div class="daytemp">${Math.round(stateObj.attributes.forecast[i].temperature * 100) / 100}${this.getUnit("temperature")}`
-                if(stateObj.attributes.forecast[i].templow){
-                    forecast += `&nbsp;/&nbsp;${Math.round(stateObj.attributes.forecast[i].templow * 100) / 100}${this.getUnit("temperature")}`;
+                forecast += `<p class="dayname">${regional[config.lang]['dayNames'][d_date.getDay()]}&nbsp;${d_date.getDate()}</p>
+                                <img src="${forecastIcon}" alt="${forecasts[i].condition}" title="${forecasts[i].condition}" />
+                                <div class="daytemp">${Math.round(forecasts[i].temperature * 100) / 100}${this.getUnit("temperature")}`
+                if (forecasts[i].templow) {
+                    forecast += `&nbsp;/&nbsp;${Math.round(forecasts[i].templow * 100) / 100}${this.getUnit("temperature")}`;
                 }
                 forecast += `</div></li>`;
                 $(elem).find('#forecast').append(forecast);
             }
         }
-        if(config.renderDetails){
-            HtcWeather.renderDetails(elem, config,stateObj,hass_states) 
+        if (config.renderDetails) {
+            HtcWeather.renderDetails(elem, config, stateObj, hass_states)
         }
     }
 
-    static getHighLow(){
+    static getHighLow() {
         var config = HtcWeather.getConfig
         var returnEntityHtml = '';
         var high_low_state = '';
         var today_date = `${regional[config.lang]['dayNames'][new Date().getDay()]}&nbsp;${new Date().getDate()}`;
         var is_forecast = true;
-        if(config.high_low_entity){
+        if (config.high_low_entity) {
             var stateObj = HtcWeather.getHass.states[config.high_low_entity.entity_id]
             high_low_state = stateObj.state
-            var high_low_date = (config.high_low_entity.name)?config.high_low_entity.name:today_date;
+            var high_low_date = (config.high_low_entity.name) ? config.high_low_entity.name : today_date;
             is_forecast = false
-        }else{
+        } else {
             var stateObj = HtcWeather.getHass.states[config.entity]
-            high_low_state = Math.round(stateObj.attributes.forecast[0].temperature * 100) / 100+'&deg'
+            high_low_state = Math.round(forecasts[0].temperature * 100) / 100 + '&deg'
             var high_low_date = today_date;
         }
         returnEntityHtml += `<div id="temp"><p id="date">&nbsp${high_low_date}</p>
                         ${high_low_state}`
-        if(is_forecast && stateObj.attributes.forecast[0].templow){
-            returnEntityHtml += `&nbsp;/&nbsp;${Math.round(stateObj.attributes.forecast[0].templow * 100) / 100}&deg;`;
+        if (is_forecast && forecasts[0].templow) {
+            returnEntityHtml += `&nbsp;/&nbsp;${Math.round(forecasts[0].templow * 100) / 100}&deg;`;
         }
         return returnEntityHtml;
     }
     static getOldTime() {
         var config = HtcWeather.getConfig
         var localtime = new Date(HtcWeather.getHass.states["sensor.date_time_iso"].state);
-        var now = new Date(localtime.getTime() - (config.svrOffset*1000));
+        var now = new Date(localtime.getTime() - (config.svrOffset * 1000));
         var old = new Date();
         old.setTime(now.getTime() - 60000);
-        
+
         var old_hours, old_minutes, timeOld = '';
-        old_hours =  old.getHours();
+        old_hours = old.getHours();
         old_minutes = old.getMinutes();
 
         if (config.am_pm) {
             old_hours = ((old_hours > 12) ? old_hours - 12 : old_hours);
-        } 
+        }
 
-        old_hours   = ((old_hours <  10) ? "0" : "") + old_hours;
-        old_minutes = ((old_minutes <  10) ? "0" : "") + old_minutes;
+        old_hours = ((old_hours < 10) ? "0" : "") + old_hours;
+        old_minutes = ((old_minutes < 10) ? "0" : "") + old_minutes;
 
-        var firstHourDigit = old_hours.substr(0,1);
-        var secondHourDigit = old_hours.substr(1,1);
-        var firstMinuteDigit = old_minutes.substr(0,1);
-        var secondMinuteDigit = old_minutes.substr(1,1);
+        var firstHourDigit = old_hours.substr(0, 1);
+        var secondHourDigit = old_hours.substr(1, 1);
+        var firstMinuteDigit = old_minutes.substr(0, 1);
+        var secondMinuteDigit = old_minutes.substr(1, 1);
         var old_time = {
-            firstHourDigit : firstHourDigit,
+            firstHourDigit: firstHourDigit,
             secondHourDigit: secondHourDigit,
-            firstMinuteDigit : firstMinuteDigit,
+            firstMinuteDigit: firstMinuteDigit,
             secondMinuteDigit: secondMinuteDigit,
-            old_hours:old_hours,
-            old_minutes:old_minutes
+            old_hours: old_hours,
+            old_minutes: old_minutes
         }
         return old_time
         // set minutes
     }
-    static setNewTime(elem){
+    static setNewTime(elem) {
         var config = HtcWeather.getConfig
         var localtime = new Date(HtcWeather.getHass.states["sensor.date_time_iso"].state);
-        var now = new Date(localtime.getTime() - (config.svrOffset*1000));
+        var now = new Date(localtime.getTime() - (config.svrOffset * 1000));
         var old = new Date();
         old.setTime(now.getTime() - 60000);
-        
+
         var now_hours, now_minutes, old_hours, old_minutes, timeOld = '';
-        now_hours =  now.getHours();
+        now_hours = now.getHours();
         now_minutes = now.getMinutes();
-        old_hours =  old.getHours();
+        old_hours = old.getHours();
         old_minutes = old.getMinutes();
 
         if (config.am_pm) {
             var am_pm = now_hours > 11 ? 'pm' : 'am';
-            $(elem).find("#am_pm").find('img').attr("src",config.clockImagesPath + am_pm+".png")
+            $(elem).find("#am_pm").find('img').attr("src", config.clockImagesPath + am_pm + ".png")
             now_hours = ((now_hours > 12) ? now_hours - 12 : now_hours);
             old_hours = ((old_hours > 12) ? old_hours - 12 : old_hours);
-        } 
+        }
 
-        now_hours   = ((now_hours <  10) ? "0" : "") + now_hours;
-        now_minutes = ((now_minutes <  10) ? "0" : "") + now_minutes;
-        old_hours   = ((old_hours <  10) ? "0" : "") + old_hours;
-        old_minutes = ((old_minutes <  10) ? "0" : "") + old_minutes;
+        now_hours = ((now_hours < 10) ? "0" : "") + now_hours;
+        now_minutes = ((now_minutes < 10) ? "0" : "") + now_minutes;
+        old_hours = ((old_hours < 10) ? "0" : "") + old_hours;
+        old_minutes = ((old_minutes < 10) ? "0" : "") + old_minutes;
 
-        var firstHourDigit = old_hours.substr(0,1);
-        var secondHourDigit = old_hours.substr(1,1);
-        var firstMinuteDigit = old_minutes.substr(0,1);
-        var secondMinuteDigit = old_minutes.substr(1,1);
+        var firstHourDigit = old_hours.substr(0, 1);
+        var secondHourDigit = old_hours.substr(1, 1);
+        var firstMinuteDigit = old_minutes.substr(0, 1);
+        var secondMinuteDigit = old_minutes.substr(1, 1);
 
         if (secondMinuteDigit != '9') {
             firstMinuteDigit = firstMinuteDigit + '1';
@@ -453,45 +483,45 @@ class HtcWeather extends LitElement {
         }
         var fmd = $(elem).find("#fmd")
         var smd = $(elem).find("#smd")
-        
-        setTimeout(function() {
+
+        setTimeout(function () {
             $(fmd).attr('src', config.clockImagesPath + firstMinuteDigit + '-1.png');
             $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg2.png');
-        },200);
-        setTimeout(function() { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png')},250);
-        setTimeout(function() {
+        }, 200);
+        setTimeout(function () { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png') }, 250);
+        setTimeout(function () {
             $(fmd).attr('src', config.clockImagesPath + firstMinuteDigit + '-2.png');
             $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg4.png');
-        },400);
-        setTimeout(function() { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg5.png')},450);
-        setTimeout(function() {
+        }, 400);
+        setTimeout(function () { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg5.png') }, 450);
+        setTimeout(function () {
             $(fmd).attr('src', config.clockImagesPath + firstMinuteDigit + '-3.png');
             $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg6.png');
-        },600);
+        }, 600);
 
-        setTimeout(function() {
+        setTimeout(function () {
             $(smd).attr('src', config.clockImagesPath + secondMinuteDigit + '-1.png');
             $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg2.png');
-        },200);
-        setTimeout(function() { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png')},250);
-        setTimeout(function() {
+        }, 200);
+        setTimeout(function () { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png') }, 250);
+        setTimeout(function () {
             $(smd).attr('src', config.clockImagesPath + secondMinuteDigit + '-2.png');
             $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg4.png');
-        },400);
-        setTimeout(function() { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg5.png')},450);
-        setTimeout(function() {
+        }, 400);
+        setTimeout(function () { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg5.png') }, 450);
+        setTimeout(function () {
             $(smd).attr('src', config.clockImagesPath + secondMinuteDigit + '-3.png');
             $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg6.png');
-        },600);
+        }, 600);
 
-        setTimeout(function() {$(fmd).attr('src', config.clockImagesPath + now_minutes.substr(0,1) + '.png')},800);
-        setTimeout(function() {$(smd).attr('src', config.clockImagesPath + now_minutes.substr(1,1) + '.png')},800);
-        setTimeout(function() { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg1.png')},850);
+        setTimeout(function () { $(fmd).attr('src', config.clockImagesPath + now_minutes.substr(0, 1) + '.png') }, 800);
+        setTimeout(function () { $(smd).attr('src', config.clockImagesPath + now_minutes.substr(1, 1) + '.png') }, 800);
+        setTimeout(function () { $(elem).find('#minutes_bg').find('img').attr('src', config.clockImagesPath + 'clockbg1.png') }, 850);
 
         if (now_minutes == '00') {
-           
+
             if (config.am_pm) {
-                if (now_hours == '00') {                   
+                if (now_hours == '00') {
                     firstHourDigit = firstHourDigit + '1';
                     now_hours = '12';
                 } else if (now_hours == '01') {
@@ -516,39 +546,39 @@ class HtcWeather extends LitElement {
             }
             var fhd = $(elem).find('#fhd')
             var shd = $(elem).find('#shd')
-            setTimeout(function() {
+            setTimeout(function () {
                 $(fhd).attr('src', config.clockImagesPath + firstHourDigit + '-1.png');
                 $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg2.png');
-            },200);
-            setTimeout(function() { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png')},250);
-            setTimeout(function() {
+            }, 200);
+            setTimeout(function () { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png') }, 250);
+            setTimeout(function () {
                 $(fhd).attr('src', config.clockImagesPath + firstHourDigit + '-2.png');
                 $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg4.png');
-            },400);
-            setTimeout(function() { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg5.png')},450);
-            setTimeout(function() {
+            }, 400);
+            setTimeout(function () { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg5.png') }, 450);
+            setTimeout(function () {
                 $(fhd).attr('src', config.clockImagesPath + firstHourDigit + '-3.png');
                 $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg6.png');
-            },600);
+            }, 600);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $(shd).attr('src', config.clockImagesPath + secondHourDigit + '-1.png');
                 $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg2.png');
-            },200);
-            setTimeout(function() { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png')},250);
-            setTimeout(function() {
+            }, 200);
+            setTimeout(function () { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg3.png') }, 250);
+            setTimeout(function () {
                 $(shd).attr('src', config.clockImagesPath + secondHourDigit + '-2.png');
                 $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg4.png');
-            },400);
-            setTimeout(function() { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg5.png')},450);
-            setTimeout(function() {
+            }, 400);
+            setTimeout(function () { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg5.png') }, 450);
+            setTimeout(function () {
                 $(shd).attr('src', config.clockImagesPath + secondHourDigit + '-3.png');
                 $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg6.png');
-            },600);
+            }, 600);
 
-            setTimeout(function() {$(fhd).attr('src', config.clockImagesPath + now_hours.substr(0,1) + '.png')},800);
-            setTimeout(function() {$(shd).attr('src', config.clockImagesPath + now_hours.substr(1,1) + '.png')},800);
-            setTimeout(function() { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg1.png')},850);
+            setTimeout(function () { $(fhd).attr('src', config.clockImagesPath + now_hours.substr(0, 1) + '.png') }, 800);
+            setTimeout(function () { $(shd).attr('src', config.clockImagesPath + now_hours.substr(1, 1) + '.png') }, 800);
+            setTimeout(function () { $(elem).find('#hours_bg').find('img').attr('src', config.clockImagesPath + 'clockbg1.png') }, 850);
         }
     }
     static getUnit(measure) {
@@ -565,7 +595,7 @@ class HtcWeather extends LitElement {
         }
     }
 
-    static renderDetails(elem, config,stateObj,hass_states) {
+    static renderDetails(elem, config, stateObj, hass_states) {
         const sun = hass_states["sun.sun"];
         let next_rising;
         let next_setting;
@@ -581,7 +611,7 @@ class HtcWeather extends LitElement {
                 </div>
             </div>`);
             var sun_details = `<font color="orange">☀</font> <font color="green"><ha-icon icon="mdi:weather-sunset-up"></ha-icon></font>&nbsp;${next_rising.toLocaleTimeString()}&nbsp;&nbsp;&nbsp;<font color="red"><ha-icon icon="mdi:weather-sunset-down"></ha-icon></font>&nbsp;${next_setting.toLocaleTimeString()}`;
-            $(elem).find('#sun_details').append(sun_details);   
+            $(elem).find('#sun_details').append(sun_details);
             $(elem).find('#wind_details').append(`
                     <span class="ha-icon"><ha-icon icon="mdi:weather-windy"></ha-icon></span>
                     ${regional[config.lang]['windDirections'][parseInt((stateObj.attributes.wind_bearing + 11.25) / 22.5)]} ${stateObj.attributes.wind_speed} ${stateObj.attributes.wind_speed}<span class="unit">
@@ -593,11 +623,10 @@ class HtcWeather extends LitElement {
 
     static getWeatherIcon(config, condition) {
         var hass_states = HtcWeather.getHass.states
-        return `${config.weatherImagesPath}${
-            hass_states["sun.sun"] && hass_states["sun.sun"] == "below_horizon"
+        return `${config.weatherImagesPath}${hass_states["sun.sun"] && hass_states["sun.sun"] == "below_horizon"
             ? weatherIconsNight[condition]
             : weatherIconsDay[condition]
-        }.png`;
+            }.png`;
     }
 
     _handleClick(entity) {
@@ -607,7 +636,7 @@ class HtcWeather extends LitElement {
     getCardSize() {
         return 3;
     }
-    getScript(){}
+    getScript() { }
 
     getStyle(config) {
 
@@ -619,5 +648,8 @@ class HtcWeather extends LitElement {
 
 
 }
+async function waitForForecasts(test) {
+    const delayMs = 500;
+    while (!test()) await new Promise(resolve => setTimeout(resolve, delayMs));
+}
 customElements.define("htc-weather-card", HtcWeather);
-
