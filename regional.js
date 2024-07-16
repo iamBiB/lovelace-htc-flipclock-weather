@@ -64,6 +64,12 @@ export const regional = {
 		dayNames: ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La'],
 		windDirections: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW','N'],
 		lang: 'fi'
+	},
+	'fr': {
+		monthNames: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+		dayNames: ['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa'],
+		windDirections: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO','N'],
+		lang: 'fr'
 	}
 };
 
