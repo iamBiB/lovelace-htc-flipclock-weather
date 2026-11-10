@@ -1,5 +1,5 @@
 # HomeAssistant HTC Flipclock with Weather card
-[![](https://img.shields.io/github/release/ibBogdan/htc-hassio-weather-card.svg?style=flat-square)](https://github.com/ibBogdan/htc-hassio-weather-card/releases/latest)
+[![](https://img.shields.io/github/release/iamBiB/lovelace-htc-flipclock-weather.svg?style=flat-square)](https://github.com/iamBiB/lovelace-htc-flipclock-weather/releases/latest)
 
 HTC-style flip clock with weather and forecast for [Home Assistant](https://www.home-assistant.io/).
 
@@ -41,14 +41,14 @@ If the sensor doesn't exist, the card falls back to the browser's clock and logs
 
 ### HACS (recommended)
 1. In Home Assistant open **HACS → ⋮ (top right) → Custom repositories**.
-2. Add `https://github.com/ibBogdan/htc-hassio-weather-card` with type **Dashboard**.
+2. Add `https://github.com/iamBiB/lovelace-htc-flipclock-weather` with type **Dashboard**.
 3. Search for **HTC Flip Clock & Weather** in HACS and download it.
 4. Hard-refresh your browser (Ctrl+Shift+R).
 
-HACS adds the dashboard resource for you (`/hacsfiles/htc-hassio-weather-card/htc-flipclock-weather.js`) and tells you when an update is available.
+HACS adds the dashboard resource for you (`/hacsfiles/lovelace-htc-flipclock-weather/htc-flipclock-weather.js`) and tells you when an update is available.
 
 ### Manual install
-1. Download the latest [release](https://github.com/ibBogdan/htc-hassio-weather-card/releases/latest) and copy the **contents of the `dist` folder** into `config/www/custom_ui/htc-weather/`, so you end up with `config/www/custom_ui/htc-weather/htc-flipclock-weather.js`.
+1. Download the latest [release](https://github.com/iamBiB/lovelace-htc-flipclock-weather/releases/latest) and copy the **contents of the `dist` folder** into `config/www/custom_ui/htc-weather/`, so you end up with `config/www/custom_ui/htc-weather/htc-flipclock-weather.js`.
 2. Add the resource: **Settings → Dashboards → ⋮ (top right) → Resources → Add resource**
    - URL: `/local/custom_ui/htc-weather/htc-flipclock-weather.js?v2.1.3`
    - Type: **JavaScript module**
