@@ -39,7 +39,15 @@ Add it via **Settings → Devices & Services → Add Integration → Time & Date
 
 If the sensor doesn't exist, the card falls back to the browser's clock and logs a warning in the browser console.
 
-### HACS (recommended)
+### Marketplace (Home Assistant 2026.11 and newer)
+1. Go to **Settings → Marketplace**.
+2. Select **Add from link** (upper-right corner) and enter `iamBiB/lovelace-htc-flipclock-weather`. Marketplace asks you to connect GitHub the first time you add a repository.
+3. Open the repository in the list and select **Install**.
+4. Reload your browser (Ctrl+Shift+R).
+
+The Marketplace adds the dashboard resource for you and checks for updates.
+
+### HACS (Home Assistant before 2026.11)
 1. In Home Assistant open **HACS → ⋮ (top right) → Custom repositories**.
 2. Add `https://github.com/iamBiB/lovelace-htc-flipclock-weather` with type **Dashboard**.
 3. Search for **HTC Flip Clock & Weather** in HACS and download it.
@@ -63,12 +71,12 @@ resources:
 
 ### Upgrading from v1
 - **Manual install:** delete the old `htc-weather` folder, then copy the contents of `dist` into it as above. This clears out leftover v1 files like `themes.js` and `lib/`. The resource URL stays the same; just bump the `?v` number so browsers load the new version.
-- **Switching to HACS:** delete the old `www/custom_ui/htc-weather` folder and remove its entry under **Settings → Dashboards → Resources**, then install through HACS.
+- **Switching to Marketplace or HACS:** delete the old `www/custom_ui/htc-weather` folder and remove its entry under **Settings → Dashboards → Resources**, then install as above.
 - Your existing card configuration keeps working. The only change is that `renderForecast` now defaults to `true`.
 - Weather icons moved from `themes/<theme>/weather/<set>/` to the shared folder `themes/icons/<set>/`.
 
 ## Updating
-- **HACS:** update from HACS when it shows a new version, then hard-refresh the browser.
+- **Marketplace / HACS:** install the update when it shows up, then hard-refresh the browser.
 - **Manual:** copy the new `dist` contents over the old ones, then bump the `?v=` number in the resource URL so browsers load the new version.
 
 The browser console shows the loaded version as `HTC Flip Clock x.y.z`.
