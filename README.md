@@ -1,4 +1,4 @@
-<img src="docs/images/icon.svg" alt="" width="96" align="right">
+<p align="center"><img src="docs/images/icon@2x.png" alt="HTC Flip Clock & Weather icon" width="128"></p>
 
 # HomeAssistant HTC Flipclock with Weather card
 [![](https://img.shields.io/github/release/iamBiB/lovelace-htc-flipclock-weather.svg?style=flat-square)](https://github.com/iamBiB/lovelace-htc-flipclock-weather/releases/latest)
