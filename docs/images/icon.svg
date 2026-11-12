@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+
+<clipPath id="c8"><rect x="8" y="14" width="114" height="132" rx="18"/></clipPath>
+<g clip-path="url(#c8)">
+<rect x="8" y="14" width="114" height="66.0" fill="#3A474E"/>
+<rect x="8" y="80.0" width="114" height="66.0" fill="#263238"/>
+<text x="65.0" y="109.0" text-anchor="middle" font-family="DejaVu Sans Condensed" font-weight="bold" font-size="80" fill="#FFFFFF">10</text>
+<rect x="8" y="78.0" width="114" height="4" fill="#10171A"/>
+</g>
+<rect x="5" y="71.0" width="7" height="18" rx="3" fill="#10171A"/>
+<rect x="118" y="71.0" width="7" height="18" rx="3" fill="#10171A"/>
+<clipPath id="c134"><rect x="134" y="14" width="114" height="132" rx="18"/></clipPath>
+<g clip-path="url(#c134)">
+<rect x="134" y="14" width="114" height="66.0" fill="#3A474E"/>
+<rect x="134" y="80.0" width="114" height="66.0" fill="#263238"/>
+<text x="191.0" y="109.0" text-anchor="middle" font-family="DejaVu Sans Condensed" font-weight="bold" font-size="80" fill="#FFFFFF">08</text>
+<rect x="134" y="78.0" width="114" height="4" fill="#10171A"/>
+</g>
+<rect x="131" y="71.0" width="7" height="18" rx="3" fill="#10171A"/>
+<rect x="244" y="71.0" width="7" height="18" rx="3" fill="#10171A"/>
+<circle cx="170" cy="186" r="30" fill="#263238"/>
+<line x1="204.0" y1="186.0" x2="216.0" y2="186.0" stroke="#FF9800" stroke-width="8" stroke-linecap="round"/><line x1="194.0" y1="210.0" x2="202.5" y2="218.5" stroke="#FF9800" stroke-width="8" stroke-linecap="round"/><line x1="170.0" y1="220.0" x2="170.0" y2="232.0" stroke="#FF9800" stroke-width="8" stroke-linecap="round"/><line x1="146.0" y1="210.0" x2="137.5" y2="218.5" stroke="#FF9800" stroke-width="8" stroke-linecap="round"/><line x1="136.0" y1="186.0" x2="124.0" y2="186.0" stroke="#FF9800" stroke-width="8" stroke-linecap="round"/><line x1="146.0" y1="162.0" x2="137.5" y2="153.5" stroke="#FF9800" stroke-width="8" stroke-linecap="round"/><line x1="170.0" y1="152.0" x2="170.0" y2="140.0" stroke="#FF9800" stroke-width="8" stroke-linecap="round"/><line x1="194.0" y1="162.0" x2="202.5" y2="153.5" stroke="#FF9800" stroke-width="8" stroke-linecap="round"/>
+<circle cx="170" cy="186" r="24" fill="#FFB300"/>
+<g fill="#263238" stroke="#263238" stroke-width="12" stroke-linejoin="round"><circle cx="96" cy="212" r="24"/><circle cx="126" cy="196" r="32"/><circle cx="160" cy="214" r="22"/><rect x="96" y="206" width="64" height="30"/></g>
+<g fill="#FFFFFF"><circle cx="96" cy="212" r="24"/><circle cx="126" cy="196" r="32"/><circle cx="160" cy="214" r="22"/><rect x="96" y="206" width="64" height="30"/></g>
+</svg>
