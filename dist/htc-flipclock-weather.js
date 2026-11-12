@@ -9,7 +9,7 @@
  */
 import { regional } from './regional.js?v1.1.5';
 
-const VERSION = '2.1.3';
+const VERSION = '2.2.0';
 const BASE_PATH = new URL('./', import.meta.url).pathname;
 
 const THEMES = {
@@ -27,6 +27,7 @@ const DEFAULTS = {
     renderDetails: true,
     forecast_days: 4,
     high_low_entity: false,
+    temperature: null, // { entity, decimals, title } — overrides for the big temperature on the left
     time_entity: 'sensor.date_time_iso',
     timezone: null,
     widgetPath: BASE_PATH,
@@ -153,8 +154,8 @@ ha-card { overflow: hidden; cursor: pointer; padding: 12px 12px 10px; box-sizing
 .local { left: calc(18 * var(--u)); }
 .today { right: calc(18 * var(--u)); text-align: right; }
 .city, .date { font-size: calc(19 * var(--u)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.temp { font-size: calc(30 * var(--u)); font-weight: bold; }
-.hilo { font-size: calc(24 * var(--u)); }
+.temp, .hilo { font-size: calc(28 * var(--u)); }
+.temp { font-weight: bold; }
 .unit { font-size: .6em; vertical-align: top; margin-left: 1px; }
 
 .forecast { display: flex; margin-top: 4px; }
@@ -234,6 +235,9 @@ class HtcWeatherCard extends HTMLElement {
         const c = { ...DEFAULTS, ...config, theme };
         if (!c.widgetPath.endsWith('/')) c.widgetPath += '/';
         c.forecast_days = Math.max(1, Math.min(7, Number(c.forecast_days) || 4));
+        // `temperature` may be a map or a YAML list of single-key maps; merge either into one object.
+        const tCfg = Array.isArray(c.temperature) ? Object.assign({}, ...c.temperature.filter((x) => x && typeof x === 'object')) : c.temperature;
+        c.temperature = tCfg && typeof tCfg === 'object' ? tCfg : {};
         c.imagesPath = `${c.widgetPath}themes/${theme.name}/`;
         c.clockImagesPath = `${c.imagesPath}clock/`;
         c.themeOpts = THEMES[theme.name] || THEMES.default;
@@ -264,7 +268,7 @@ class HtcWeatherCard extends HTMLElement {
         if (!this._config) return;
         if (!this._unsubP && this.isConnected) this._subscribe();
         const c = this._config;
-        const watched = [c.entity, 'sun.sun', c.time_entity, c.high_low_entity && c.high_low_entity.entity_id];
+        const watched = [c.entity, 'sun.sun', c.time_entity, c.temperature.entity, c.high_low_entity && c.high_low_entity.entity_id];
         if (!old || watched.some((e) => e && old.states[e] !== hass.states[e]) || old.locale !== hass.locale) {
             this._update();
         }
@@ -593,8 +597,16 @@ class HtcWeatherCard extends HTMLElement {
         if (e.wicon.getAttribute('src') !== icon) e.wicon.src = icon;
         e.wicon.title = st.state;
 
-        e.city.textContent = c.title || a.friendly_name || c.entity;
-        e.temp.innerHTML = `${esc(round(a.temperature))}<span class="unit">${esc(tUnit)}</span>`;
+        e.city.textContent = c.temperature.title || c.title || a.friendly_name || c.entity;
+        // Big temperature: optional custom sensor + fixed decimals, falling back to the weather entity.
+        const tc = c.temperature;
+        const tSt = tc.entity && this._hass.states[tc.entity];
+        const tOk = !!tSt && Number.isFinite(parseFloat(tSt.state));
+        const tVal = tOk ? parseFloat(tSt.state) : a.temperature;
+        const tDec = parseInt(tc.decimals, 10);
+        const tTxt = Number.isInteger(tDec) && tDec >= 0 && Number.isFinite(Number(tVal)) ? Number(tVal).toFixed(tDec) : round(tVal);
+        const tU = tOk ? (tSt.attributes.unit_of_measurement || tUnit) : tUnit;
+        e.temp.innerHTML = `${esc(tTxt)}<span class="unit">${esc(tU)}</span>`;
 
         // Right block: date + high/low (or custom entity)
         const today = new Date(now.y, now.mo, now.d);

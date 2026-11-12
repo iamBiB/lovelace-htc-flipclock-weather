@@ -58,14 +58,14 @@ HACS adds the dashboard resource for you (`/hacsfiles/lovelace-htc-flipclock-wea
 ### Manual install
 1. Download the latest [release](https://github.com/iamBiB/lovelace-htc-flipclock-weather/releases/latest) and copy the **contents of the `dist` folder** into `config/www/custom_ui/htc-weather/`, so you end up with `config/www/custom_ui/htc-weather/htc-flipclock-weather.js`.
 2. Add the resource: **Settings → Dashboards → ⋮ (top right) → Resources → Add resource**
-   - URL: `/local/custom_ui/htc-weather/htc-flipclock-weather.js?v2.1.3`
+   - URL: `/local/custom_ui/htc-weather/htc-flipclock-weather.js?v2.2.0`
    - Type: **JavaScript module**
 3. Hard-refresh your browser (Ctrl+Shift+R).
 
 If you use YAML-mode dashboards:
 ```yaml
 resources:
-  - url: /local/custom_ui/htc-weather/htc-flipclock-weather.js?v2.1.3
+  - url: /local/custom_ui/htc-weather/htc-flipclock-weather.js?v2.2.0
     type: module
 ```
 
@@ -99,6 +99,7 @@ The browser console shows the loaded version as `HTC Flip Clock x.y.z`.
 | `renderForecast` | bool | `true` | Show the forecast row. |
 | `forecast_days` | int | `4` | Number of forecast entries (1–7). |
 | `renderDetails` | bool | `true` | Show sunrise/sunset, wind and last-update time. Sunrise/sunset needs `sun.sun`. |
+| `temperature` | object | — | Customize the current temperature on the left. Keys: `entity`, `decimals`, `title` (all optional). See the example below. |
 | `high_low_entity` | object | — | Replace today's high/low with any entity. Keys: `entity_id`, `name`. |
 | `theme.name` | string | `default` | `default` or `dusk`. |
 | `theme.weather_icon_set` | string | `default` | `htc`, `dusk`, `picto`, or `default` (the theme's own set). |
@@ -136,6 +137,22 @@ high_low_entity:
   entity_id: sensor.outdoor_humidity
   name: Humidity
 ```
+
+#### Local sensor for the current temperature
+The weather entity's temperature comes from a forecast service and can differ from your own outdoor sensor. Use `temperature` to show the sensor instead:
+```yaml
+type: custom:htc-weather-card
+entity: weather.home
+temperature:
+  entity: sensor.outside_temperature
+  decimals: 1
+  title: Outside
+```
+- `entity`: any numeric sensor. The card uses the sensor's unit. If the sensor is unavailable or not a number, the card shows the weather entity's temperature instead.
+- `decimals`: always show this many decimals, so `18` becomes `18.0` with `decimals: 1`. Without it, the temperature is rounded to at most one decimal.
+- `title`: text shown above the temperature. Without it, the card uses `title`, then the weather entity's name.
+
+The weather icon, today's high/low and the forecast still come from the weather `entity`.
 
 #### Clock only
 ```yaml
