@@ -16,6 +16,8 @@ HTC-style flip clock with weather and forecast for [Home Assistant](https://www.
 # Support
 Hey dude! If you like it .. well :beers: or a :coffee: would be nice :D
 
+Questions, ideas or bugs? Join the [discussion on the Home Assistant community forum](https://community.home-assistant.io/t/htc-flip-clock-with-weather/184541) or open a [GitHub issue](https://github.com/iamBiB/lovelace-htc-flipclock-weather/issues).
+
 [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/fhc0C7A)
 
 ## What's new in v2
